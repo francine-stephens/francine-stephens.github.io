@@ -1,6 +1,6 @@
 ---
 title: "Francine Stephens"
-image: "francine2.jpg"
+image: "francine_sq.jpg"
 links:
   - label: LinkedIn
     url: "https://linkedin.com/"
