@@ -1,3 +1,3 @@
 ## Francine Stephens
 
-Welcome to my personal website.
+This site contains the source code for my website. 

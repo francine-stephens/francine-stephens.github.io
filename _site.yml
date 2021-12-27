@@ -1,0 +1,20 @@
+name: "."
+title: "Francine Stephens"
+description: |
+  Francine Stephens
+output_dir: "docs"
+navbar:
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "About"
+      href: about.html
+    - text: "Resume"
+      href: resume.html 
+    - text: "Portfolio"
+      href: portfolio.html
+    - icon: fab fa-github
+      href: "https://github.com/francine-stephens"
+output: distill::distill_article
+theme: theme.css
+

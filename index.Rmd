@@ -1,0 +1,19 @@
+---
+title: "Francine Stephens"
+image: "francine2.jpg"
+links:
+  - label: LinkedIn
+    url: "https://linkedin.com/"
+  - label: GitHub
+    url: "https://github.com/francine-stephens"
+  - label: Email
+    url: "mailto:fis@stanford.edu"
+output:
+  postcards::trestles
+site: distill::distill_website
+---
+ 
+
+## Analytics | Research | Geospatial Science
+
+I am a geospatial scientist and researcher analyzing big data to discover new insights about the demographics of human movement in and around our shared public spaces. Currently I am working on my doctoral dissertation at Stanford and interning as a research scientist at Intuit. I have created this website to act as a container and digital display case for my projects, educational and professional experiences, and digital garden. I hope that you find something that sparks your interest while navigating around my website.

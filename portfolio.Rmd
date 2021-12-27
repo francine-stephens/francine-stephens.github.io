@@ -1,0 +1,21 @@
+---
+title: "Francine Stephens"
+description: |
+  Take a look at what I have been working on.
+site: distill::distill_website
+---
+
+
+INSERT PROJECTS HERE. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+# Learn more about creating websites with Distill at:
+# https://rstudio.github.io/distill/website.html
+
+# Learn more about publishing to GitHub Pages at:
+# https://rstudio.github.io/distill/publish_website.html#github-pages
+
+```
+
