@@ -1,8 +1,8 @@
-name: "fis"
+name: "."
 title: "Francine Stephens"
 description: |
   Francine Stephens
-output_dir: "_site"
+output_dir: "docs"
 navbar:
   right:
     - text: "Home"

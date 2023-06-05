@@ -17,5 +17,4 @@ site: distill::distill_website
  
 ### PhD Candidate | Geospatial Scientist | Data Storyteller
 
-Welcome to my personal website! I am a PhD candidate in sociology at Stanford and will be defending my dissertation in August. My research relies upon big spatial data and addresses geographic problems such as site selection, resource allocation, and geodemographic classification. Browse the pages and links on my website to learn more about my interests, prior work experience, skills, and projects.  
-
+Welcome to my personal website! I am a PhD candidate in sociology at Stanford and will be defending my dissertation in August. My research relies upon big spatial data and addresses geographic problems such as site selection, resource allocation, and geodemographic classification. Browse the pages and links on my website to learn more about my interests, prior work experience, skills, and projects. 
