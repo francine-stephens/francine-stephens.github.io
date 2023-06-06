@@ -1,0 +1,30 @@
+---
+title: "Excelsior Neighborhood Story Map"
+description: |
+  View my map story of the history and social life of San Francisco's Excelsior neighborhood.
+# author:
+#   - name: Unknown
+# date: 2023-06-06
+output:
+  distill::distill_article:
+    self_contained: false
+---
+
+# What is a Story Map
+
+ESRI Story Maps are web applications that let you, the author, combine web-maps with narrative text, images, and multimedia, including video and audio. The applications are designed to be attractive and usable by anyone, which makes them great for education and outreach to the general public or to a particular audience. Story maps can be made for many different topics. Basically, anything that you can show on a map can be the topic of a story map!
+
+# Story Map of San Francisco's Excelsior Neighborhood
+
+As the TA for the undergraduate urban lab course called [*The Social Life of Neighborhoods*](https://bookdown.org/fis/social-life-of-neighborhoods/) in Stanford's Sociology Department, I created a story map for the Excelsior neighborhood as an example for students in the class. 
+
+You can view the [original story map](https://arcg.is/1Xj0v4) here. Click on the expand option in the bottom right hand corner of the iframe below to view the story in full-screen mode.
+
+<iframe width="800px" height="600px" src="https://stanford.maps.arcgis.com/apps/MapJournal/index.html?appid=64c1e53d0ad3424f899049f619658869"></iframe>
+
+
+ESRI has limited support for the original story map builder, so I transposed the original version into the [new storymap build](https://storymaps.arcgis.com/stories/e1c4ee27db744b1ebf4de0f4fbd6e304).
+
+<iframe src="https://storymaps.arcgis.com/stories/e1c4ee27db744b1ebf4de0f4fbd6e304" width="100%" height="500px" frameborder="0" allowfullscreen allow="geolocation"></iframe>
+
+

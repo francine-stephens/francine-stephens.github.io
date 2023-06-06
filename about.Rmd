@@ -1,10 +1,17 @@
 ---
-title: "About this site"
+title: "About me"
 description: |
-  Some additional details about the website
+  Professional and personal background
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
-```
+I'm a Ph.D. candidate in [Sociology at Stanford](https://sociology.stanford.edu/people/francine-stephens) planning to defend my dissertation in August and transition to a new role as a data scientist/analyst in industry. As a Ph.D. candidate, much of my time is focused on running analyses and conducting research for my dissertation, which is concerned with understanding where parks serves as public spaces that draw people from a variety of neighborhoods compared to maintaining segregation. I draw on satellite imagery, foot-traffic data, and U.S. Census data and apply geospatial data science and statistical methods in my research. 
+
+While in graduate school, I found that many aspects of the academic lifestyle were not a good fit for me. I held jobs as GIS/Spatial Data Analyst for the Texas Democratic Party's Tech & Data Team during the 2020 general election cycle and as a Research Scientist on the People Analytics Research Team at Intuit during my graduate studies to expose myself to analytics and research settings outside of academia. These experiences confirmed that I enjoy applied research and prefer working on projects at a faster clip than academia affords.  
+
+My academic research and professional experiences in tech and data spaces have allowed me to work with different types of data, including satellite imagery, U.S. Census data, state voter records, social media data, survey data, and workplace communication data (e.g., Zoom, Slack, Outlook). My [résumé](resume.pdf) and [projects](projects.html) provide more details about the skills and abilities that I have developed across my academic and non-academic experiences. Working with different types of big, messy data and telling stories with data are the defining themes across all of my experiences, These two things are also what I love most about being a data scientist.
+
+
+**Personal Background**
+
+I grew up in New Braunfels, Texas, which is located between San Antonio and Austin. Running and hiking were the main activities I developed a passion for while growing up in the Texas Hill Country. For my BA, I studied Sociology at the University of Pennsylvania, where I fell in love with the city of Philadelphia. Immediately, after completing my bachelor’s degree, I swapped coasts to move to Palo Alto for the opportunity pursue a Ph.D. at Stanford. Post-pandemic, I moved up the peninsula to San Mateo and have enjoyed hiking and running along the Bay Trail. My other hobbies include mapping my run, hike, and bike routes; cooking vegan food; reading historical fiction; and avidly following the NBA.
 
