@@ -3,23 +3,19 @@ title: "Airbnb Neighborhood Descriptions & Racial Stereotypes"
 description: |
   I conducted NLP analyses of neighborhood descriptions from Airbnb listings to identify how the language used to market neighborhoods to prospective tourists differed by neighborhood racial composition.
 # author: []
-# date: 2023-06-06
+date: 2023-03-18
+categories: 
+  - NLP
+  - GIS
+  - Data Visualization
+  - Research Paper
+  - Neighborhoods
 output:
   distill::distill_article:
     self_contained: false
 ---
 
-**Abstract:** The proliferation of Airbnb rentals across cities is associated with amplifying economic and
-housing inequalities, but few studies have investigated how a city’s structural and cultural
-conditions are framed to prospective tourists on Airbnb’s online platform. Using topic modeling
-on a public corpus of 19,967 Airbnb listings from Los Angeles, California located in 2,156
-census block groups of which 1,316 (61%) were not majority white, I investigate how listings
-differ in their descriptions based on neighborhood racial composition. I find that descriptions of
-predominantly white neighborhoods focus on the physical and landscape aesthetics of the
-neighborhood, whereas minority-majority neighborhoods include more details about residents as
-well as the safety of the community. Language that deflects negative stereotypes about minority
-neighborhoods is most explicit in descriptions of urban core neighborhoods where Black
-residents are the majority or plurality. Overall, the findings suggest that the discursive
+**Abstract:** The proliferation of Airbnb rentals across cities is associated with amplifying economic and housing inequalities, but few studies have investigated how a city’s structural and cultural conditions are framed to prospective tourists on Airbnb’s online platform. Using topic modeling on a public corpus of 19,967 Airbnb listings from Los Angeles, California located in 2,156 census block groups of which 1,316 (61%) were not majority white, I investigate how listings differ in their descriptions based on neighborhood racial composition. I find that descriptions of predominantly white neighborhoods focus on the physical and landscape aesthetics of the neighborhood, whereas minority-majority neighborhoods include more details about residents as well as the safety of the community. Language that deflects negative stereotypes about minority neighborhoods is most explicit in descriptions of urban core neighborhoods where Black residents are the majority or plurality. Overall, the findings suggest that the discursive
 neighborhood marketing strategies in Airbnb’s online platform transmit existing urban
 inequalities to prospective tourists by implicitly or explicitly engaging with stereotypes about
 race and urban life.

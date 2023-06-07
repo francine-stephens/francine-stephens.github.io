@@ -3,7 +3,10 @@ title: "Web Scraping & Analysis of Blind Reviews"
 description: |
   Code and analysis from the web-scraper script and analysis workflow that I created for the Blind Review listening channel for the Intuit People Analytics Team.
 # author: []
-# date: 2023-06-06
+date: 2022-04-01
+categories: 
+  - Web Scraping
+  - Workflows
 output:
   distill::distill_article:
     self_contained: false
