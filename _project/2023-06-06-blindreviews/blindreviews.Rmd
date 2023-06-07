@@ -7,6 +7,7 @@ description: |
 output:
   distill::distill_article:
     self_contained: false
+preview: blind_table.png
 ---
 
 When I interned at Intuit, my manager expressed interest in having a channel that included some competitive intelligence so that we could compare the employee experience at Intuit to the experience at competitors. She was interested in the reviews employees leave anonymously on [Blind](https://www.teamblind.com/){target="_blank"}. 

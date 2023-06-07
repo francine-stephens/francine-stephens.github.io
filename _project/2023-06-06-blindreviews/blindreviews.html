@@ -112,12 +112,12 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--radix_placeholder_rmarkdown_metadata-->
 
   <script type="text/json" id="radix-rmarkdown-metadata">
-  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output","date"]}},"value":[{"type":"character","attributes":{},"value":["Web Scraping & Analysis of Blind Reviews"]},{"type":"character","attributes":{},"value":["Code and analysis from the web-scraper script and analysis workflow that I created for the Blind Review listening channel for the Intuit People Analytics Team.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["2023-06-06"]}]}
+  {"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","output","preview","date"]}},"value":[{"type":"character","attributes":{},"value":["Web Scraping & Analysis of Blind Reviews"]},{"type":"character","attributes":{},"value":["Code and analysis from the web-scraper script and analysis workflow that I created for the Blind Review listening channel for the Intuit People Analytics Team.\n"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["blind_table.png"]},{"type":"character","attributes":{},"value":["2023-06-06"]}]}
   </script>
   <!--/radix_placeholder_rmarkdown_metadata-->
   
   <script type="text/json" id="radix-resource-manifest">
-  {"type":"character","attributes":{},"value":["analyze_blind_reviews.html","blind table.png","blindreviews_files/anchor-4.2.2/anchor.min.js","blindreviews_files/bowser-1.9.3/bowser.min.js","blindreviews_files/distill-2.2.21/template.v2.js","blindreviews_files/header-attrs-2.21/header-attrs.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.map","blindreviews_files/popper-2.6.0/popper.min.js","blindreviews_files/tippy-6.2.7/tippy-bundle.umd.min.js","blindreviews_files/tippy-6.2.7/tippy-light-border.css","blindreviews_files/tippy-6.2.7/tippy.css","blindreviews_files/tippy-6.2.7/tippy.umd.min.js","blindreviews_files/webcomponents-2.0.0/webcomponents.js","execute_blind_webscraper.html","Ratings_Change_Over_Time.png","Ratings_count_per_month.png"]}
+  {"type":"character","attributes":{},"value":["analyze_blind_reviews.html","blind_table.png","blindreviews_files/anchor-4.2.2/anchor.min.js","blindreviews_files/bowser-1.9.3/bowser.min.js","blindreviews_files/distill-2.2.21/template.v2.js","blindreviews_files/header-attrs-2.21/header-attrs.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.map","blindreviews_files/popper-2.6.0/popper.min.js","blindreviews_files/tippy-6.2.7/tippy-bundle.umd.min.js","blindreviews_files/tippy-6.2.7/tippy-light-border.css","blindreviews_files/tippy-6.2.7/tippy.css","blindreviews_files/tippy-6.2.7/tippy.umd.min.js","blindreviews_files/webcomponents-2.0.0/webcomponents.js","execute_blind_webscraper.html","Ratings_Change_Over_Time.png","Ratings_count_per_month.png"]}
   </script>
   <!--radix_placeholder_navigation_in_header-->
   <!--/radix_placeholder_navigation_in_header-->
@@ -1517,7 +1517,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>Based on her vision, I crafted the code to scrape ratings on Intuit’s Blind page and the pages of five other competitors: Microsoft, Salesforce, Google, Facebook/Meta, and Amazon and analyze the reviews on a monthly basis. The images and slide deck below show the final outputs of the end-to-end process that I devised.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="figure"><span style="display:block;" id="fig:unnamed-chunk-1"></span>
-<img src="blind%20table.png" alt="Ratings Overview" width="641" />
+<img src="blind_table.png" alt="Ratings Overview" width="641" />
 <p class="caption">
 Figure 1: Ratings Overview
 </p>
@@ -1535,13 +1535,13 @@ Figure 2: Monthly Review Frequency
 <p>
 <ul>
 <li><strong>The Deliverable:</strong> I mocked up the slides included on the Blind monthly analysis that we would present to the managers of the analytics and research team. <a href="https://docs.google.com/presentation/d/11vu7u_p9DwfU4wJlozWZ5LLzi8tjJLTNF8ulOwUAufg/edit?usp=sharing" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-file-powerpoint fa-lg"></i> Slides</button> </a></li>
-<li><strong>Scraping Functions:</strong> These functions are imported into the execution script and can be seen below. <a href="https://github.com/francine-stephens/blind_reviews/blob/main/scrape_blind_reviews_scalar_ratings.R" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Functions Code</button> </a></li>
+<li><strong>Scraping Functions:</strong> These functions are imported into the execution script and can be seen below. <a href="https://github.com/francine-stephens/blind_reviews/blob/main/scrape_blind_reviews_scalar_ratings.R" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
 <li><strong>Executable Scraping Script:</strong> <a href="execute_blind_webscraper.html" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
 <li><strong>Analysis Script:</strong> <a href="analyze_blind_reviews.html" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
 <li><strong>All Code:</strong> <a href="https://github.com/francine-stephens/blind_reviews/tree/main" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> GitHub Repo</button> </a></li>
 </ul>
 </p>
-<h1 id="overview-of-scraping-cleaning-functions">Overview of Scraping &amp; Cleaning Functions</h1>
+<h1 id="scraping-cleaning-functions">Scraping &amp; Cleaning Functions</h1>
 <div class="layout-chunk" data-layout="l-body">
 <div class="sourceCode">
 <pre class="sourceCode r"><code class="sourceCode r"><span><span class='co'>## Scalar Review Scraping Functions Script ## </span></span>
