@@ -1,0 +1,72 @@
+---
+title: "Create Dataframe of Reviews from Last Month"
+author: "Francine Stephens"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output: html_document
+---
+
+## Overview & Getting Started
+
+The script subsets the last month's reviews and creates a CSV with the reviews in order of most recent to oldest to support manual data collection of the review text from the Intuit Blind website. 
+
+```{r setup, warning=FALSE, message=FALSE, include=TRUE}
+knitr::opts_chunk$set(echo=FALSE, warning=FALSE, message=FALSE)
+
+##### Uncomment the lines below if running for the FIRST TIME #####
+#install.packages(c(
+# "stringr",
+# "lubridate",
+# "tidyverse"))
+
+# Load Libraries
+libraries <- c("tidyverse",
+               "stringr",
+               "lubridate"
+)
+require(libraries)
+lapply(libraries, require, character.only = TRUE)
+
+# Set File Paths
+## Set the file path that you want to write the text review skeleton df to
+wd <- getwd() # This is your current working directory
+text_review_output_path <- "/03-2022/"  #you want to write this to the monthly file you are working on
+
+# Set Key-Parameters
+## Update the start of month date & start of next month date
+month_start_reviews <- as.Date("2022-03-01")
+month_start_next_month <- as.Date("2022-04-01")
+
+
+# Import Data 
+blind_reviews <- readRDS("intuit_reviews.rds")
+
+```
+
+
+```{r export review text}
+# Export just the current month as CSV so that you can collect the text reviews manually:
+  # Date
+  # Title
+  # job title
+  # pros
+  # cons
+review_text_skeleton_df <- blind_reviews %>% 
+  # Retain just this month's reviews 
+  filter(Date_obj >= month_start_reviews & Date_obj < month_start_next_month) %>%
+  # Retain the following fields to be able to identify the reviews on the blind webpage
+  select(Date_obj,
+         title,
+         job_title
+         ) %>% 
+  # Add the review text fields so that you can copy-paste these from the blind webpage
+  mutate(pros = "",
+         cons = "") %>% 
+  # Arrange by Date (Newest to oldest)
+  arrange(desc(Date_obj))
+
+write_csv(review_text_skeleton_df, 
+          paste0(wd, text_review_output_path, "review_text.csv")
+)
+
+```
+

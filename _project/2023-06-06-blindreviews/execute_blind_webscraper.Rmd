@@ -1,0 +1,119 @@
+---
+title: "Execute web-scraping script"
+author: "Francine Stephens"
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+## Overview (README)
+
+This script loads the web-scraping and cleaning functions. Be sure to **UPDATE** the parameters in the first chunk for the company's Blind page that you are gathering data on before executing. 
+
+The script will generate a data file (in RDS and CSV formats) that will have all of the months of reviews to date for the company that you set in the parameters. This data file will be called upon in the analysis script, which generates the tables and visuals for the monthly P&P senior staff VOE meeting. 
+
+```{r setup, warning=FALSE, message=FALSE, include=TRUE}
+
+##### Uncomment the lines below if running for the FIRST TIME #####
+#install.packages(c("rvest",
+# "stringr",
+# "rebus",
+# "lubridate",
+# "tidyverse"))
+
+# Load Libraries
+libraries <- c("tidyverse",
+               "rvest", 
+               "stringr",
+               "rebus",
+               "lubridate"
+)
+require(libraries)
+lapply(libraries, require, character.only = TRUE)
+
+# Set Key-Parameters
+## UPDATE the start of month date & start of next month date ##
+month_start_reviews <- as.Date("2022-03-01")
+month_start_next_month <- as.Date("2022-04-01")
+
+## UPDATE company Blind URL ##
+url <- "https://www.teamblind.com/company/Intuit/reviews"
+
+## Set the list of pages in website; Check Blind website for page range. ##
+list_of_pages <- str_c(url, '?page=', 1:24)
+  
+
+## UPDATE existing datafile that holds all Blind data ##
+existing_blind_reviews <- readRDS("intuit_reviews.rds")
+  # google_reviews.rds
+  # amazon_reviews.rds
+  # salesforce_reviews.rds
+  # microsoft_reviews.rds
+  # facebook_reviews.rds
+
+
+# UPDATE Name for new ratings data-frame in RDS and CSV formats ## 
+updated_ratings_data_rds <- paste0("intuit", "_reviews.rds")
+  # google_reviews.rds
+  # amazon_reviews.rds
+  # salesforce_reviews.rds
+  # microsoft_reviews.rds
+  # facebook_reviews.rds
+
+updated_ratings_data_csv <- paste0("intuit", "_reviews.csv")
+  # google_reviews.csv
+  # amazon_reviews.csv
+  # salesforce_reviews.csv
+  # microsoft_reviews.csv
+  # facebook_reviews.csv
+
+```
+
+
+# Source all Web-Scraping & Cleaning Functions
+```{r source scraping functions}
+source("scrape_blind_reviews_scalar_ratings.R", local = knitr::knit_global())
+```
+
+```{r function code, file='scrape_blind_reviews_scalar_ratings.R'}
+```
+
+## Scrape & Write Dataframe
+
+All of the scraping functions that were sourced are called on to create the *scraped_data* dataframe. 
+
+```{r scrape data from website}
+scraped_data <- scrape_write_table(url)
+
+knitr::kable(head(scraped_data))
+```
+
+
+## Clean & Export Scalar Rating Data
+
+The data-cleaning functions from the sourced script are called on to clean-up the dataframe (outputs: *scraped_data_cleaned*) and standardize for export.
+
+The new month's reviews are stacked on the previously pulled reviews and exported to a dataframe in the working directory. 
+
+```{r clean}
+scraped_data_cleaned <- clean_scraped_data(scraped_data)
+
+knitr::kable(head(scraped_data_cleaned))
+```
+
+```{r export} 
+## Identify New Reviews 
+new_reviews_to_repo <- setdiff(scraped_data_cleaned, existing_blind_reviews)
+
+all_scraped_data_cleaned <- rbind(new_reviews_to_repo, existing_blind_reviews)
+
+# Export cleaned Ratings data frame
+saveRDS(all_scraped_data_cleaned,
+        updated_ratings_data_rds)
+
+write_csv(all_scraped_data_cleaned,
+          updated_ratings_data_csv)
+
+```
+

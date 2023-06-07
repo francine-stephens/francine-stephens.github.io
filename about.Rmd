@@ -1,8 +1,10 @@
 ---
 title: "About me"
-description: |
-  Professional and personal background
+# description: |
+#   Professional and personal background
 ---
+
+**Professional Background**
 
 I'm a Ph.D. candidate in [Sociology at Stanford](https://sociology.stanford.edu/people/francine-stephens) planning to defend my dissertation in August and transition to a new role as a data scientist/analyst in industry. As a Ph.D. candidate, much of my time is focused on running analyses and conducting research for my dissertation, which is concerned with understanding where parks serves as public spaces that draw people from a variety of neighborhoods compared to maintaining segregation. I draw on satellite imagery, foot-traffic data, and U.S. Census data and apply geospatial data science and statistical methods in my research. 
 

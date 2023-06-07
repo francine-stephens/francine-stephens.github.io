@@ -7,6 +7,7 @@ description: |
 output:
   distill::distill_article:
     self_contained: false
+preview: filter_day_of_week.gif
 ---
 
 The Social Life of Neighborhoods was a course offered through Stanford's Sociology Department in the spring of 2021. The underlying goal of the course is to mount a quarter long
