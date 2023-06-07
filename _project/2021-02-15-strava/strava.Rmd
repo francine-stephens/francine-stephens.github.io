@@ -14,7 +14,11 @@ output:
 preview: runs_041421_by_location.png
 ---
 
-When I have some downtime, I extract my Strava activities from the Strava API to practice minimalist visualizations and view trends in my exercise activities. I stock-pile the visuals here to have a single place where I can refer to what visuals I have previously made, so that I can formulate what  to practice on in the future. 
+When I have some downtime, I extract my Strava activities from the Strava API to practice minimalist visualizations and view trends in my exercise activities. I stock-pile the visuals here to have a single place where I can refer to what visuals I have previously made, so that I can formulate what  to practice on in the future. The repo with my code can be found on GitHub, however, I have included some snippets here as well.
+
+<p>
+<a href="https://github.com/francine-stephens/Exercise/tree/main" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> GitHub Repo</button> </a>
+</p>
 
 ## Runs
 

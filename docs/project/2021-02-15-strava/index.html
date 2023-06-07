@@ -88,9 +88,9 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 
 
   <!--radix_placeholder_meta_tags-->
-<title>Francine Stephens: Minimalist Visualizations of My Strava Data</title>
+<title>Francine Stephens: Minimalist Visualizations of Strava Activities</title>
 
-<meta property="description" itemprop="description" content="A digital garden of minimalist visualizations that I create of my Strava activities."/>
+<meta property="description" itemprop="description" content="A digital garden of minimalist visualizations that I create from my Strava activities."/>
 
 
 <!--  https://schema.org/Article -->
@@ -98,22 +98,22 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <meta property="article:created" itemprop="dateCreated" content="2021-02-15"/>
 
 <!--  https://developers.facebook.com/docs/sharing/webmasters#markup -->
-<meta property="og:title" content="Francine Stephens: Minimalist Visualizations of My Strava Data"/>
+<meta property="og:title" content="Francine Stephens: Minimalist Visualizations of Strava Activities"/>
 <meta property="og:type" content="article"/>
-<meta property="og:description" content="A digital garden of minimalist visualizations that I create of my Strava activities."/>
+<meta property="og:description" content="A digital garden of minimalist visualizations that I create from my Strava activities."/>
 <meta property="og:locale" content="en_US"/>
 <meta property="og:site_name" content="Francine Stephens"/>
 
 <!--  https://dev.twitter.com/cards/types/summary -->
 <meta property="twitter:card" content="summary"/>
-<meta property="twitter:title" content="Francine Stephens: Minimalist Visualizations of My Strava Data"/>
-<meta property="twitter:description" content="A digital garden of minimalist visualizations that I create of my Strava activities."/>
+<meta property="twitter:title" content="Francine Stephens: Minimalist Visualizations of Strava Activities"/>
+<meta property="twitter:description" content="A digital garden of minimalist visualizations that I create from my Strava activities."/>
 
 <!--/radix_placeholder_meta_tags-->
   <!--radix_placeholder_rmarkdown_metadata-->
 
 <script type="text/json" id="radix-rmarkdown-metadata">
-{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","date","output"]}},"value":[{"type":"character","attributes":{},"value":["Minimalist Visualizations of My Strava Data"]},{"type":"character","attributes":{},"value":["A digital garden of minimalist visualizations that I create of my Strava activities."]},{"type":"character","attributes":{},"value":["2021-02-15"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[false]}]}]}]}
+{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["title","description","date","categories","output","preview"]}},"value":[{"type":"character","attributes":{},"value":["Minimalist Visualizations of Strava Activities"]},{"type":"character","attributes":{},"value":["A digital garden of minimalist visualizations that I create from my Strava activities."]},{"type":"character","attributes":{},"value":["2021-02-15"]},{"type":"character","attributes":{},"value":["Data Visualization","GIS","Recreation"]},{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["distill::distill_article"]}},"value":[{"type":"list","attributes":{"names":{"type":"character","attributes":{},"value":["self_contained"]}},"value":[{"type":"logical","attributes":{},"value":[false]}]}]},{"type":"character","attributes":{},"value":["runs_041421_by_location.png"]}]}
 </script>
 <!--/radix_placeholder_rmarkdown_metadata-->
   
@@ -2109,7 +2109,7 @@ gtag('config', 'G-Z5FMF0LVZS');
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Minimalist Visualizations of My Strava Data","description":"A digital garden of minimalist visualizations that I create of my Strava activities.","authors":[],"publishedDate":"2021-02-15T00:00:00.000-08:00"}
+{"title":"Minimalist Visualizations of Strava Activities","description":"A digital garden of minimalist visualizations that I create from my Strava activities.","authors":[],"publishedDate":"2021-02-15T00:00:00.000-08:00"}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -2133,15 +2133,23 @@ gtag('config', 'G-Z5FMF0LVZS');
 <!--/radix_placeholder_site_before_body-->
 
 <div class="d-title">
-<h1>Minimalist Visualizations of My Strava Data</h1>
+<h1>Minimalist Visualizations of Strava Activities</h1>
 <!--radix_placeholder_categories-->
+<div class="dt-tags">
+  <a href="../../projects.html#category:Data_Visualization" class="dt-tag">Data Visualization</a>
+  <a href="../../projects.html#category:GIS" class="dt-tag">GIS</a>
+  <a href="../../projects.html#category:Recreation" class="dt-tag">Recreation</a>
+</div>
 <!--/radix_placeholder_categories-->
-<p><p>A digital garden of minimalist visualizations that I create of my Strava activities.</p></p>
+<p><p>A digital garden of minimalist visualizations that I create from my Strava activities.</p></p>
 </div>
 
 
 <div class="d-article">
-<p>When I have some downtime, I extract my Strava activities from the Strava API to practice minimalist visualizations and view trends in my exercise activities. I stock-pile the visuals here to have a single place where I can refer to what visuals I have previously made, so that I can formulate what to practice on in the future.</p>
+<p>When I have some downtime, I extract my Strava activities from the Strava API to practice minimalist visualizations and view trends in my exercise activities. I stock-pile the visuals here to have a single place where I can refer to what visuals I have previously made, so that I can formulate what to practice on in the future. The repo with my code can be found on GitHub, however, I have included some snippets here as well.</p>
+<p>
+<a href="https://github.com/francine-stephens/Exercise/tree/main" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> GitHub Repo</button> </a>
+</p>
 <h2 id="runs">Runs</h2>
 <h3 id="identifying-my-running-neighborhood">Identifying my running neighborhood</h3>
 <p>I filtered down to the top 20% of routes I traversed in the last two years, which is how long I have lived in San Mateo. The code reveals the substantial amount of data wrangling that went into transforming a non-spatial dataframe with Google Polylines into spatial routes (lines).</p>
