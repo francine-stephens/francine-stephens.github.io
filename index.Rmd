@@ -14,7 +14,16 @@ output:
   postcards::trestles
 site: distill::distill_website
 ---
- 
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Z5FMF0LVZS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-Z5FMF0LVZS');
+</script>
+
 ### PhD Candidate | Geospatial Scientist | Data Storyteller
 
 Welcome to my personal website! I am a PhD candidate in sociology at Stanford and will be defending my dissertation in August. My research relies upon big spatial data and addresses geographic problems such as site selection, resource allocation, and geodemographic classification. Browse the pages and links on my website to learn more about my interests, prior work experience, skills, and projects. 
