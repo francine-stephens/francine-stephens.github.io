@@ -14,7 +14,7 @@ When I interned at Intuit, my manager expressed interest in having a channel tha
 Based on her vision, I crafted the code to scrape ratings on Intuit's Blind page and the pages of five other competitors: Microsoft, Salesforce, Google, Facebook/Meta, and Amazon and analyze the reviews on a monthly basis. The images and slide deck below show the final outputs of the end-to-end process that I devised. 
 
 ```{r, echo=FALSE, fig.cap= "Ratings Overview"}
-knitr::include_graphics("blind table.png")
+knitr::include_graphics("blind_table.png")
 
 ```
 
