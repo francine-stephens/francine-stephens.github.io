@@ -1,5 +1,21 @@
 [
   {
+    "path": "project/2023-06-25-mapboxbasemaps/",
+    "title": "Basemap Syling in Mapbox",
+    "description": "View basemaps that I have created in Mapbox using place-based styles.",
+    "author": [],
+    "date": "2023-06-25",
+    "categories": [
+      "Mapbox",
+      "Basemaps",
+      "Cartography"
+    ],
+    "contents": "\r\nStanford University Style\r\n\r\n\r\nView full screen here.\r\nCopy/Download style here.\r\nThe view below features GPS tracks from my Walks, Runs, and Bikes at Stanford\r\nView full screen here.\r\n\r\n\r\nMap developed based on Stanford brand color palette and typography.\r\nUniversity of Pennsylvania Style\r\n\r\n\r\nView full screen style here.\r\nCopy/Download style here.\r\nMap developed based on University of Pennsylvania brand color palette and typography.\r\nBay Area Style\r\n\r\n\r\nView full screen style here.\r\nCopy/Download style here.\r\n\r\n\r\n\r\n",
+    "preview": "project/2023-06-25-mapboxbasemaps/penn_style.jpg",
+    "last_modified": "2023-07-13T10:41:35-07:00",
+    "input_file": {}
+  },
+  {
     "path": "project/2023-06-06-airbnb/",
     "title": "Airbnb Neighborhood Descriptions & Racial Stereotypes",
     "description": "I conducted NLP analyses of neighborhood descriptions from Airbnb listings to identify how the language used to market neighborhoods to prospective tourists differed by neighborhood racial composition.",

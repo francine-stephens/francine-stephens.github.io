@@ -1,0 +1,48 @@
+---
+title: "Basemap Syling in Mapbox"
+description: |
+  View basemaps that I have created in Mapbox using place-based styles.
+#author: []
+date: 2023-06-25
+categories: 
+  - Mapbox
+  - Basemaps
+  - Cartography
+output:
+  distill::distill_article:
+    self_contained: false
+preview: penn_style.jpg
+---
+
+## Stanford University Style
+
+<iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/francinestephens/clk1bxf0i014f01pa92za7e9n.html?title=false&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=false#13.63/37.42418/-122.17028" title="Stanford" style="border:none;"></iframe>
+View full screen [here](https://api.mapbox.com/styles/v1/francinestephens/clk1bxf0i014f01pa92za7e9n.html?title=view&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#13.63/37.42418/-122.17028).
+
+Copy/Download style [here](https://api.mapbox.com/styles/v1/francinestephens/clk1bxf0i014f01pa92za7e9n.html?title=copy&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#13.63/37.42418/-122.17028).
+
+**The view below features GPS tracks from my Walks, Runs, and Bikes at Stanford**
+
+View full screen [here](https://api.mapbox.com/styles/v1/francinestephens/clk1d2c66014s01pabuv1gf7x.html?title=view&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#13.63/37.42418/-122.17028).
+
+<iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/francinestephens/clk1d2c66014s01pabuv1gf7x.html?title=false&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=false#13.63/37.42418/-122.17028" title="Stanford Runs-Walks-Bike GPS Tracks Heatmap" style="border:none;"></iframe>
+
+*Map developed based on Stanford brand color palette and typography.*
+
+
+## University of Pennsylvania Style
+
+<iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/francinestephens/clk19i2uv016u01qv79fke5xt.html?title=false&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=false#14/39.95297/-75.19406" title="UPENN" style="border:none;"></iframe>
+View full screen style [here](https://api.mapbox.com/styles/v1/francinestephens/clk19i2uv016u01qv79fke5xt.html?title=view&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#14/39.95297/-75.19406).
+
+Copy/Download style [here](https://api.mapbox.com/styles/v1/francinestephens/clk19i2uv016u01qv79fke5xt.html?title=copy&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#14/39.95297/-75.19406).
+
+*Map developed based on University of Pennsylvania brand color palette and typography.*
+
+## Bay Area Style
+
+<iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/francinestephens/cljogduml00po01pa7qmt684l.html?title=false&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=false#10/37.6251/-122.4143" title="Bay Area" style="border:none;"></iframe>
+View full screen style [here](https://api.mapbox.com/styles/v1/francinestephens/cljogduml00po01pa7qmt684l.html?title=view&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#10/37.6251/-122.4143).
+
+Copy/Download style [here](https://api.mapbox.com/styles/v1/francinestephens/cljogduml00po01pa7qmt684l.html?title=copy&access_token=pk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJjazhobGNramgwMDF1M2Zsa2tieHV2eDF1In0.60HwmeTBd_q8TY5yAA0kZw&zoomwheel=true&fresh=true#10/37.6251/-122.4143).
+
