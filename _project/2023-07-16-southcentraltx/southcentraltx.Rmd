@@ -10,10 +10,10 @@ categories:
 output:
   distill::distill_article:
     self_contained: false
-preview: climb-south-central-texas.png
+preview: climb-south-central-texas2.png
 ---
 
-This page is a work-in-progress. It features a few maps that I have created of South Central Texas, which is the region where I grew up in. 
+This page is a work-in-progress. It features a few maps that I have created of South Central Texas, which is where I grew up. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -24,7 +24,7 @@ knitr::opts_chunk$set(echo = FALSE)
 A map of bouldering locations - outdoor and indoor - in the Texas Hill Country Metro region.
 
 ```{r, echo=FALSE}
-knitr::include_graphics("climb-south-central-texas.png")
+knitr::include_graphics("climb-south-central-texas2.png")
 
 ```
 

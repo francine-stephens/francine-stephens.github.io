@@ -9,9 +9,26 @@
       "GIS",
       "Cartography"
     ],
-    "contents": "\r\nThis page is a work-in-progress. It features a few maps that I have created of South Central Texas, which is the region where I grew up in.\r\nClimb South Central Texas\r\nA map of bouldering locations - outdoor and indoor - in the Texas Hill Country Metro region.\r\n\r\n\r\n\r\nSources\r\nMap: Mapbox\r\nFont: Alpine Serif by Sarah Bell\r\nFiesta City\r\nA minimalist map of San Antonio colored in the Fiesta celebration theme that I created for a friend. The colors of the land-use layers are applied to only the green space, commercial and industrial, and education/cultural land use attributes.\r\n\r\n\r\n\r\nSources\r\nMap: Mapbox\r\nLanduse Data: Open Street Map\r\n\r\n\r\n\r\n",
-    "preview": "project/2023-07-16-southcentraltx/climb-south-central-texas.png",
-    "last_modified": "2023-07-25T17:18:21-05:00",
+    "contents": "\r\nThis page is a work-in-progress. It features a few maps that I have created of South Central Texas, which is where I grew up.\r\nClimb South Central Texas\r\nA map of bouldering locations - outdoor and indoor - in the Texas Hill Country Metro region.\r\n\r\n\r\n\r\nSources\r\nMap: Mapbox\r\nFont: Alpine Serif by Sarah Bell\r\nFiesta City\r\nA minimalist map of San Antonio colored in the Fiesta celebration theme that I created for a friend. The colors of the land-use layers are applied to only the green space, commercial and industrial, and education/cultural land use attributes.\r\n\r\n\r\n\r\nSources\r\nMap: Mapbox\r\nLanduse Data: Open Street Map\r\n\r\n\r\n\r\n",
+    "preview": "project/2023-07-16-southcentraltx/climb-south-central-texas2.png",
+    "last_modified": "2023-07-26T22:26:08-05:00",
+    "input_file": {}
+  },
+  {
+    "path": "project/2023-06-27-urbanparks/",
+    "title": "Spatial Accessibility and Use of Urban Parks",
+    "description": "A sampling of maps depicting walkable access to parks.",
+    "author": [],
+    "date": "2023-06-27",
+    "categories": [
+      "GIS",
+      "Data Visualization",
+      "Neighborhoods",
+      "Parks"
+    ],
+    "contents": "\r\nData Sources\r\nTrust for Public Lands Park Database, 2019\r\nAmerican Community Survey 2015-2019\r\nSafeGraph’s Nature Park Mobility, 2019\r\nAnalysis:\r\nI conducted an accessibility analysis for parks in the ten most populous cities as of 2019. Following the Trust for Public Land’s recommendation to ensure parks are within a 10-minute walk of urban residents, I define the population living within a 10-minute walk of a park as having spatial access. I calculated 10-minute walking zone polygons around each park using Mapbox’s isochrone API.\r\nAfter intersecting the isochrone polygons and census block groups, I computed the total population that lives within the isochrones in each city and disaggregated the population by racial/ethnic demographic categories. I gathered the population estimates for park accessibility by performing simple area-weighted apportionment, which assumes that the population is evenly distributed across the city block group.\r\nIn addition to mapping the results of the accessibility analysis, I also mapped the census block groups that fell in the top 25% by frequency of monthly trips to the park per capita. I identified the most frequent park-use subset of census block groups using a spatial SQL query.\r\nResults\r\nAmong America’s ten most populous cities, walkable access to parks is highest in the smallest scale, most dense cities. The table below shows that sunbelt cities like Phoenix and San Antonio have the most pronounced access gaps with approximately 50% of the population living within a 10-minute walk of a park. Houston is the only city where walkable park access was statistically significantly lower for non-white populations - Black (57%), Hispanic (61%), Asian (61%) - compared to the white population.\r\n\r\n\r\n\r\nThe frequency of trips to park per capita across neighborhoods in these ten cities is similar. Monthly per capita trips range from 2.5 in Phoenix to 3.5 in Philadelphia. The maps in Figures 1 and 2 show that highest park use is most prevalent in the neighborhoods with spatial access to parks, especially larger park areas. High park usage rates tend to cluster downtown neighborhoods in the three cities with the lowest level of spatial access - Houston, San Antonio, and Phoenix - which signals the value of walkable amenities in the smaller scale regions of these more car-centric cities.\r\n\r\n\r\n\r\nFigure 1: Maps of Top 5 Cities by Spatial Access\r\n\r\n\r\n\r\n\r\n\r\n\r\nFigure 2: Maps of Bottom 5 Cities by Spatial Access\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    "preview": "project/2023-06-27-urbanparks/NYC.jpg",
+    "last_modified": "2023-07-26T21:42:04-05:00",
     "input_file": {}
   },
   {
