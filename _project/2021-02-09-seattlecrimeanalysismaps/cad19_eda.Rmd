@@ -1,0 +1,1113 @@
+---
+title: "Seattle 911 EDA"
+author: "Francine Stephens"
+date: "Last Updated: `r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    theme: united
+    highlight: tango
+---
+
+
+This web report includes descriptive statistics of the Seattle 911 CAD data. The report starts with an overall summary of the structure of the dataset and then steps through each variable in the dataset.
+
+```{r setup, include=F, warning=F, message=F}
+knitr::opts_chunk$set(echo=F)
+
+## Libraries
+options(tidyverse.quiet = T)
+packages <- c(
+              "tidyverse",
+              "scales",
+              "naniar",
+              "lubridate",
+              "googleway",
+              "sf",
+              "sp",
+              "ggplot2",
+              "ggmap",
+              "maptools",
+              "raster",
+              "spatstat",
+              "plotly",
+              "KernSmooth",
+              "tigris",
+              "leaflet",
+              "RColorBrewer", 
+              "censusapi", 
+              "tidycensus", 
+              "openxlsx"
+              )
+lapply(packages, library, character.only = T)
+options(dplyr.summarise.inform = F)
+
+##API
+key <- "AIzaSyCztwSCIHyEKP_uyjPrdZKf3jgZFA-XV1Y"
+set_key(key=key)
+
+## Local Paths 
+setwd("~/Projects/seattle911")
+wd <- getwd()
+shp_path <- "/shp"
+precs_path <- "/Spd_Precincts/"
+
+```
+
+## Dataset Description
+
+Let's start by identifying the dimensions in the dataset. 
+```{r data import, warning=F, message=F}
+## Import Data & Set Variable Names + Types
+
+  ## To speed up import, data were saved as R object and imported that way. 
+# cad <-
+#   read_csv("2019 CAD Data.csv",
+#            col_types = cols(.default = "f",
+#                             `CAD Event ID` = "d",
+#                             `Event First Dispatch Time (ATTR)` = "c",
+#                             `Dispatch Address` = "c",
+#                             `Officer Serial Num` = "c",
+#                             `Squad Desc` = "c",
+#                             `Dispatch Blurred Latitude` = "d",
+#                             `Dispatch Blurred Longitude` = "d",
+#                             `CAD Event Response Time (Seconds) (SUM)` = "d",
+#                             `Total Service Time (Seconds) (SUM)` = "d")
+#            )
+# 
+# cad <- cad %>%
+#   select_all(funs(gsub(" ", "_", .))) %>%
+#   select_all(funs(gsub("[()]", "", .))) %>%
+#   filter(Call_Type_Desc == "911" | Call_Type_Desc == "TELEPHONE OTHER, NOT 911")
+#   
+# saveRDS(cad, "cad_2019_data.rds")
+
+cad <- readRDS("cad_2019_data.rds")
+## Number of events & variables
+dim(cad)
+
+```
+
+There are 752,421 events and and 17 variables in the CAD data export. For this analysis, we narrow the focus to 911 and other telephone call types only. The reduced dataset contains **480,811 events.** 
+
+The variable names from the CAD export are listed below. 
+```{r variables}
+## View variable names
+names(cad)
+```
+
+
+Now, let's find the number of categories in the categorical variables. In subsequent sections, I will step through each variable and summarize the distributions in greater detail. 
+
+```{r levels of cat vars, warning=F, message=F}
+## Number of categories for categorical variables
+knitr::kable(cad %>%
+  select_if(~class(.) == 'factor') %>%
+  summarise_each(funs(n_distinct)),
+  caption = "# of Categories for Categorical Variables",
+  col.names = c("Dispatch ID", "Priority Code", "Call Type",
+                "Case Type Final Desc", "Case Type Initial Desc",
+                "Clear By Desc", "Precinct", "Sector"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+
+**Dispatch ID** - This is some sort of identifier. It's interesting that the identifiers are not unique to each event. What does the dispatch ID identify? Is this identifier going to be relevant for our analysis? 
+
+**Call priority codes and Call type description** have a manageable number of categories - 9 and 2, respectively. *Call type has 8 possible categories, but we are only focusing on two categories - 911 and other telephone (not 911).* After taking a deeper dive into the univariate statistics in the sections below and understanding what these categories mean, we can decide whether any of these categories should be aggregated. 
+
+**Case Type Final and Case Type Initial Descriptions** - These two variables have the greatest number of categories with 343 and 235 categories, respectively. We will want to parse out the categories and see how to regroup into a smaller, more manageable set of categories for analysis. After looking over the categories we can figure out some strategies for aggregating categories. 
+
+**Clear by description** - There are 23 categories in this variable. After further review below, we can look to see if any aggregation is necessary. 
+
+**Precinct** is a categorical spatial indicator. It looks like the city is divided into 6 regional precincts. 
+
+**Sector** - There are 17 sectors. This variable appears to be another spatial category related to precinct. This will be described in the sector section below. 
+
+
+Before diving into the distributions of the categorical variables in greater detail, let's take advantage of the fact that the data are time-stamped and get a sense of the frequency of events throughout the year.
+
+
+## Event Dates & Times
+
+The data are time stamped to the minute. In the graph below, I have displayed the frequency of events per day. Hover your mouse over the line graph to see the number of events that occurred on a given day. 
+
+```{r event time graph}
+## Event First Dispatch Time - Date Formats
+cad <- cad %>% 
+  mutate(event_datetime = mdy_hm(Event_First_Dispatch_Time_ATTR),
+         event_date = as.Date(event_datetime),
+         event_month = month(event_datetime, label=T)
+         )  # set as date-time
+
+# Graph events over time
+event_time_line <- cad %>%
+  group_by(event_date) %>%
+  summarize(freq = n()) %>%
+  ggplot(., aes(x=event_date, y=freq)) +
+  geom_line(color="steelblue") + 
+  labs(title = "Frequency of Calls for Service in 2019", 
+       subtitle = "Seattle, WA", 
+       y = "Number of Calls", 
+       x = "Time") +
+  scale_y_continuous(labels = scales::comma, breaks=seq(0,2600,500)) + 
+  theme(axis.text.x=element_text(angle=60, hjust=1)) + 
+  scale_x_date(limit=c(as.Date("2019-01-01"),as.Date("2019-12-31")),
+                 date_labels = "%b", date_minor_breaks = "1 month") + 
+  theme_classic()
+
+event_time_line %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange=T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+The date with the highest number of events recorded was 1,667, which was on July 5th. In general, the summer months appear to have higher frequencies that the rest of the year. 
+
+November 14th, 2019 is the date with the most marked decrease in events. There were only 61 events recorded on November 14th. This is far below other days with fewer events than normal, as shown in Table 1 below. *It raises the possibility of a glitch in the reporting system for that day.*
+
+
+```{r event date table, warning=F, message=F}
+## Table of Event date frequency
+knitr::kable(cad %>%
+  group_by(event_date) %>%
+  summarize(freq = n()) %>%
+  mutate(rank = min_rank(-freq)) %>%
+  arrange(-freq) %>% 
+  slice(1:10, 356:365),
+  caption = "Table 1: Dates with Highest and Fewest Calls",
+  col.names = c("Date", "# Calls", "Rank"), 
+  format.args = list(big.mark = ",")
+  )
+
+```
+
+On average, there were 1,317 calls for service per day in 2019. With the exception of the 76 event day on November 14th, there is not much of a skew to the distribution. 
+
+```{r summary events, warning=F, message=F}
+knitr::kable(cad %>%
+  group_by(event_date) %>%
+  summarize(freq = n()) %>%
+  summarize(avg = mean(freq, na.rm = T),
+            sd = sd(freq, na.rm = T),
+            med = median(freq, na.rm = T)), 
+  caption = "Table 2: Calls Over Time Summary",
+  col.names = c("Daily Avg", "Std. Dev", "Median"), 
+  format.args = list(big.mark = ",")
+)
+```
+
+
+## Call Priority Codes
+
+```{r call code bar graph}
+## Call Priority Codes
+cad <- cad %>%
+  mutate(Call_Priority_Code = factor(Call_Priority_Code,
+                                     levels = c("-1",
+                                                "1",
+                                                "2",
+                                                "3",
+                                                "4",
+                                                "5",
+                                                "6",
+                                                "7",
+                                                "8",
+                                                "9")))
+
+call_priority_bar <- cad %>%
+  group_by(Call_Priority_Code) %>%
+  summarize(freq = n()) %>%
+  ggplot(.,
+       aes(x=Call_Priority_Code, y=freq, fill=Call_Priority_Code)) + 
+  geom_bar(stat="identity") +
+  scale_fill_brewer(palette = "Set1") + 
+  labs(title = "Frequency of Call Priority Codes",
+  subtitle = "2019 Events", y = "Number of Calls", x = "Priority Code") +
+  scale_y_continuous(labels = scales::comma) + 
+  theme_minimal() + theme(legend.position="none")
+
+call_priority_bar %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+Code 2 is the most common priority code recorded with a total of 189,788 events. According to Table 3, Code 2 is about 40% of the events in 2019. Just over 96% of the calls for service are categorized as being categorized as priority codes 1 through 3. 
+
+Codes 6 and 7 were very rare. They do not show up as clearly in the graph, but in Table 3 they total to 44 and 75 calls, respectively.
+
+One other point to note is that there is not a code 8; the codes skip from 7 to 9.
+
+```{r call priority table}
+## Table of call priority
+knitr::kable(cad %>% 
+               group_by(Call_Priority_Code) %>%
+               summarize(freq = n()) %>%
+               mutate(percent = round((freq/sum(freq)) * 100, digits=2), 
+                      freq = scales::comma(freq)),
+             caption = "Table 3: Call Priority Codes",
+             col.names = c("Code", "# Calls", "%"), 
+             format.args = list(big.mark = ",")
+             )
+
+```
+
+
+## Call Type Description
+```{r call type description}
+## Call Type Descriptions
+knitr::kable(cad %>%
+  group_by(Call_Type_Desc) %>% 
+  summarize(freq = n()) %>%
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq)
+         ) %>%
+  arrange(-percent),
+  caption = "Table 4: Call Type Description",
+             col.names = c("Type", "# Events", "%"), 
+             format.args = list(big.mark = ",")
+)
+
+```
+
+We have retained only calls for service that came in via 911 or other telephone calls (not via 911). 911 calls are about 68% of the calls and other telephone source makes up the remaining 32%.
+
+For reference, prior to reducing the dataset, 911 calls were about 43% of the events and other telephone was 21%.
+
+
+## Case Type Final Description
+```{r final case type}
+## Case type Final categories
+case_type_final_desc <- cad %>%
+  group_by(Case_Type_Final_Desc) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         Case_Type_Final_Desc = as.character(Case_Type_Final_Desc)
+         ) %>%
+  arrange(Case_Type_Final_Desc)
+
+rmarkdown::paged_table(case_type_final_desc %>%
+  arrange(-percent)
+)
+
+```
+
+Flip through the pages in the table to view the number of events with each type of case final description. Recall that this variable has **320 different descriptions.** 
+
+Some of these descriptions have a general description followed by a more specific description that follows a dash. We could parse on the general description and then aggregate to get a smaller set of categories. I demonstrate this in the table below. 
+
+```{r final case description aggregation}
+## Aggregate final case description
+cad <- cad %>%
+  mutate(
+    case_type_final_desc_first = str_trim(str_extract(Case_Type_Final_Desc, "[^-]+"),
+                                          side = c("both")),
+    case_type_final_desc_second = str_trim(str_extract(Case_Type_Final_Desc, "[^-]*$"),
+                                           side = c("both"))
+  )
+
+case_type_final_before_dash <- cad %>%
+  group_by(case_type_final_desc_first) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         case_type_final_desc_first = as.character(case_type_final_desc_first)
+         ) %>%
+  arrange(case_type_final_desc_first)
+
+case_type_final_after_dash <- cad %>%
+  group_by(case_type_final_desc_second) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         case_type_final_desc_second = as.character(case_type_final_desc_second)
+         ) %>%
+  arrange(case_type_final_desc_second)
+
+# Table of case type description before the dash 
+rmarkdown::paged_table(case_type_final_before_dash %>%
+  arrange(-percent)
+)
+
+```
+
+**This aggregation strategy reduced the number of categories by a little over half to 140.** Disturbance cases are the most common followed by suspicious circumstances and traffic. If you flip through the pages, there are some categories that also appear to be similar to these top 3. For instance, traffic stop is listed on page 6, which seems like it could also fit under traffic. Also on page 6 is the category "Dist", which is an abbreviation for disturbance. All of descriptions and frequencies for the final case type descriptions are listed in the exported Excel file (shared over email and on the github page). 
+
+*Other Comments*
+* Need to make sure to catch abbreviations using reg. expressions (e.g., burg --> burglary)
+* Similarly, use reg. expressions for categories that look alike but differ in terms of spacing (e.g., Arson, Bombs, Explo; Abandoned car & Abandoned vehicle)
+* "#NAME?" looks like it might be the classification for events that were not classified. There are 977 events with this classification, which is about 0.2 events.
+
+```{r final case descriptions export}
+## Write Final Case Description Data Frames to Excel Workbook
+# case_descriptions_workbook <- createWorkbook()
+# 
+# addWorksheet(case_descriptions_workbook, sheetName="full_final_desc")
+# addWorksheet(case_descriptions_workbook, sheetName="first_final_desc")
+# addWorksheet(case_descriptions_workbook, sheetName="second_final_desc")
+# 
+# writeData(case_descriptions_workbook, "full_final_desc", case_type_final_desc)
+# writeData(case_descriptions_workbook, "first_final_desc", case_type_final_before_dash)
+# writeData(case_descriptions_workbook, "second_final_desc", case_type_final_after_dash)
+
+```
+
+
+## Case Type Initial Descriptions
+```{r initial case type}
+## Case type Initial categories
+case_type_init_desc <- cad %>%
+  group_by(Case_Type_Initial_Desc) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         Case_Type_Initial_Desc = as.character(Case_Type_Initial_Desc)
+         ) %>%
+  arrange(Case_Type_Initial_Desc)
+
+rmarkdown::paged_table(case_type_init_desc %>%
+  arrange(-percent)
+)
+
+```
+The top two initial case type descriptions are similar to the final case description types. 
+
+One note on structure of these descriptions is that not as many of these descriptions have the same structure as noted in the final descriptions, that is a general description followed by a more specific description/detail, with the two descriptions separated by a dash "-". Below, I have parsed out the description as I did with the final case descriptions, however, it may be a less useful approach for this description. 
+
+
+*Other Comments/Questions*
+* Need to make sure to catch abbreviations using reg. expressions (e.g., HAZ --> HAZARD)
+* "#NAME?" shows up again in this set of descriptions, though not as frequently as it did in the final descriptions (n=12,132). 
+* Would it be useful to compare final and initial descriptions? We could use some fuzzy matching and regular expressions if this is something important. If final descriptions are missing (meaning that they are coded as #NAME?) and initial descriptions are not missing, should the initial description be applied?
+
+```{r initial case description aggregation}
+## Aggregate initial case description
+cad <- cad %>%
+  mutate(
+    case_type_initial_desc_first = str_trim(str_extract(Case_Type_Initial_Desc, "[^-]+"),
+                                          side = c("both")),
+    case_type_initial_desc_second = str_trim(str_extract(Case_Type_Initial_Desc, "[^-]*$"),
+                                           side = c("both"))
+  )
+
+case_type_init_before_dash <- cad %>%
+  group_by(case_type_initial_desc_first) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         case_type_initial_desc_first = as.character(case_type_initial_desc_first)
+         ) %>%
+  arrange(case_type_initial_desc_first)
+
+case_type_init_after_dash <- cad %>%
+  group_by(case_type_initial_desc_second) %>%
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq),
+         case_type_initial_desc_second = as.character(case_type_initial_desc_second)
+         ) %>%
+  arrange(case_type_initial_desc_second)
+
+# Table of case type description before the dash 
+rmarkdown::paged_table(case_type_init_before_dash %>%
+  arrange(-percent)
+)
+
+```
+
+Aggregating reduced the number of descriptions down to 123. The top four descriptions remain the same, but the rest of the top 10 have shifted ranks (e.g., assault, trespass). 
+
+**NOTE: Unknown is pretty substantial here (n=13,907, 2.89%). The #NAME? description is less frequent (n=528), but appears to also signify unknown case descriptions.**
+
+```{r initial case descriptions export}
+## Write Initial Case Description Data Frames to Excel Workbook & Export
+# addWorksheet(case_descriptions_workbook, sheetName="full_init_desc")
+# addWorksheet(case_descriptions_workbook, sheetName="first_init_desc")
+# addWorksheet(case_descriptions_workbook, sheetName="second_init_desc")
+# 
+# writeData(case_descriptions_workbook, "full_init_desc", case_type_init_desc)
+# writeData(case_descriptions_workbook, "first_init_desc", case_type_init_before_dash)
+# writeData(case_descriptions_workbook, "second_init_desc", case_type_init_after_dash)
+# 
+# saveWorkbook(case_descriptions_workbook,
+#              file= "CAD19_case_descriptions.xlsx",
+#              overwrite = T)
+
+```
+
+
+## Clear by Description
+```{r clear by desc}
+knitr::kable(cad %>% 
+group_by(Clear_By_Desc) %>% 
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq)) %>%
+  arrange(-percent),
+  caption = "Table 4: Clear By Descriptions",
+  col.names = c("Description", "# Events", "%"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+
+In 38% of the service calls (n=286,250), assistance was rendered. The next most common response type was no arrest, but report, which was applied to about 31% of the calls (n=148,495). 
+
+The next most common clear by type was unable to locate incident or complainant. It was applied to about 11.5% of calls (n=55,366). 14 calls were marked as no such address or location (not sure if it is reasonable to consider this as similar to unable to locate incident).
+
+A physical arrest was made in 8.5% of calls (n=41,140). No police action was possible or necessary in 4% of calls (n=19,290).
+
+**OTHER NOTES:**
+* It looks like a dash "-" represents missing clear by description (n=1,878). 
+* There are some descriptions that I do not know what they mean or how they differ from other descriptions. For instance, how are responding units canceled by radio and duplicated or canceled by radio different?
+* Unable to locate incident or complainant is about 11.5% of the events. 
+
+
+## Precinct & Sector
+```{r precinct table}
+## Precinct Table
+knitr::kable(cad %>% 
+group_by(Precinct) %>% 
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq)) %>%
+  arrange(-percent),
+  caption = "Table 5: Calls per Precinct",
+  col.names = c("Precinct", "# Calls", "%"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+
+```{r precinct bar graph}
+## Distribution of Events by Precinct
+precinct_freq_bar <- cad %>%
+  group_by(Precinct) %>% 
+  summarize(freq = n()) %>%
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2)) %>%
+  ggplot(.,
+       aes(x = reorder(Precinct, -freq), y = freq, fill = Precinct)) + 
+  geom_bar(stat="identity") +
+  scale_fill_brewer(palette = "Set1") + 
+  labs(title = "Calls per Precinct",
+  subtitle = "Seattle, WA 2019", y = "Number of Calls", x = "Precinct") +
+  scale_y_continuous(labels = scales::comma) + 
+  theme_minimal() + theme(legend.position = "none")
+
+precinct_freq_bar %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+
+The north and west precincts had the most calls with about 29% and 27% of all calls, respectively. South and and east precincts had similar shares of calls at about 16%. The southwest precinct had the fewest number of calls recorded - 51,572 (11%). 
+
+For 1,282 calls, the precinct is listed as unknown. We may be able to identify a precinct for these events if they have valid latitude and longitude coordinates. Let's look to see if they do have lat and long: 
+
+```{r coordinates for unknown precincts}
+## How many events with unknown precincts have valid coordinates?
+knitr::kable(cad %>%
+  filter(Precinct == "UNKNOWN") %>%
+  mutate(coords_status = as.factor(if_else(
+    Dispatch_Blurred_Longitude <-121 & Dispatch_Blurred_Latitude > 46,
+                                    1,
+                                    0)),
+    coords_status = recode_factor(coords_status,
+                                 "0" = "Not valid coords",
+                                 "1" = "Valid coords")) %>%
+  group_by(coords_status) %>%
+  summarize(unknown_precincts_coord_freq = n()),
+  caption = "Table 6: Unknown Precinct Coordinate Status",
+  col.names = c("Coordinate Status", "# Calls"), 
+  format.args = list(big.mark = ",")
+)
+  
+```
+
+About 43% of the calls with an unknown precinct have coordinates within the geographic extent of Seattle. We can use 562 of these events with unknown precincts and assign them a precinct. When I create a spatial object from the coordinates, as shown a few sections below, I will be able to plot these. For some it may be obvious what the precinct is based on the precinct labels given to neighboring events. If the precinct classification is not obvious, the best thing to do would be to obtain a shapefile of the polygons for each of the five precincts, overlay it on the events and give the point the name of the polygon precinct that it falls within or nearest to. [Seattle's Open Data website](https://data.seattle.gov/Public-Safety/Spd-Precincts/3rtr-jjhz) has such a shapefile that I will call on and use in the spatial geoprocessing section below. 
+
+There are some interesting bivariate analyses that could be explored. For example, call priority codes and precincts. View the interactive stacked bar chart below.
+
+```{r bivariate table prec call priority}
+## Call Priority Codes & Precincts
+call_priority_precincts_stack <- cad %>% 
+  mutate(Call_Priority_Code = as.character(Call_Priority_Code),
+         Call_Priority_Code = paste0("Code ", Call_Priority_Code),
+         Call_Priority_Code = as.factor(Call_Priority_Code)) %>%
+  group_by(Precinct, Call_Priority_Code) %>%
+  summarize(freq = n()) %>%
+  ggplot(., aes(fill=Precinct, y=freq, x=Call_Priority_Code)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "Call Priority Code",
+    y = "Proportion of Calls",
+    title = "Case Priority Code by Precinct",
+    subtitle = "Seattle, WA",
+    fill = "Precinct",
+    caption = "Seattle, WA 2019"
+  ) +
+  coord_flip() + 
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    axis.text.x = element_text( hjust=1)
+    )
+  
+call_priority_precincts_stack %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+A few things stand out in the stacked bar graph of call priority codes and precincts. 
+* The breakdown of precincts within codes 1 and 2 are very similar. The north and west precincts have very similar shares in these two codes. 
+* Most of the unknown precinct calls were classified as code 9. 
+* The south precinct had no code 7 cases. 
+* Over half of the calls in code 9, were in the western precinct. 
+
+
+Let's turn to focus on the sectors. There are 17 distinct sector names. 1,282 calls were not given a sector. These calls are identical to those missing a precinct classification.  
+
+```{r sector and precinct graph}
+## Sector by Precinct Graph
+sector_precinct_freq_bar <- cad %>% 
+  group_by(Precinct, Sector) %>% 
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2)) %>%
+  ggplot(.,
+       aes(x = reorder(Sector, -freq), y = freq, fill = Precinct)) + 
+  geom_bar(stat="identity") +
+  scale_fill_brewer(palette = "Set1") + 
+  labs(title = "Calls per Sector-Precinct",
+  subtitle = "Seattle, WA 2019", y = "Number of Calls", x = "Sector") +
+  scale_y_continuous(labels = scales::comma) + 
+  theme_minimal() + 
+  theme(legend.position = "bottom") + 
+  theme(axis.text.x = element_text(angle = 90))
+
+sector_precinct_freq_bar %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+```{r sector and precinct table}
+## Sector by Precinct Table
+knitr::kable(cad %>% 
+  group_by(Precinct, Sector) %>% 
+  summarize(freq = n()) %>% 
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq)) %>%
+  arrange(Precinct, -percent),
+  caption = "Table 7: Calls by Precinct-Sector",
+  col.names = c("Precinct","Sector", "# Calls", "Percent"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+Sectors are unique to precincts. We can think of a sectors as a subdivision of the precinct. 
+
+King sector in the western precinct leads in the number of calls with 45,650 calls. This is about 34% of all calls in the west precinct. The other three sectors in the western precinct - David, Mary, and Queen - have about 10% to 12% fewer events than King. 
+
+Boy in the north precinct and Edward in the east precinct are the sectors with the next highest frequency of calls with over 33,000 calls. The share of calls in Boy is not substantially greater than other sectors in the north. However, Edward clearly has the majority of calls in the east precinct, amounting to about 44% of all calls in the precint. 
+
+The two sectors of the southwest precinct - William and Frank - have a 50-50 split of the calls. 
+
+*NOTE: The Seattle Open Data website does not appear to have a boundary shapefile or API for sector. This may be something to inquire about if we want to do point-in-polygon analyses at the sector level.*
+
+
+## Squad Description
+```{r squad desc table}
+## Squad Descriptions Frequencies
+rmarkdown::paged_table(cad %>%
+  group_by(Squad_Desc) %>%
+  summarize(freq = n()) %>%
+  arrange(-freq) %>%
+  mutate(percent = round((freq/sum(freq)) * 100, digits=2),
+         freq = scales::comma(freq))
+)
+
+```
+This is one of the variables with an unmanageable amount of categories. There are only 1,487 events missing a squad description. If you flip through the pages of the table you can see that the squad groups are named in various ways. Some are based on the field/area they work in (e.g., forensics, Arson/Bomb) and others are based on locations (i.e., precinct + sector). **NOTE: If this is a variable that is considered important we would need to approach the aggregation like we would for the Case type descriptions using the first descriptor before the dash, regular expressions, and lazy matching to get broad categories and abbreviations, misspellings, and differences in ordering of words. **
+
+
+## Officer Identifier
+```{r officer serial num}
+## Number of officers in the dataset
+n_distinct(cad$Officer_Serial_Num)
+
+```
+There are 1,262 officers in this dataset.
+
+
+## Response Time
+```{r response time sum stats}
+## Response Time
+summary(cad$CAD_Event_Response_Time_Seconds_SUM)
+
+```
+
+Response time for each event is reported in seconds. The summary statistics suggest that there are some very long response times that are outliers. The longest response time is 14,773,646 seconds, which would be many, many days long. Let's parse the seconds into higher levels of time. 
+
+```{r response time converted to period}
+## Response Time parsed into periods
+cad <- cad %>%
+  mutate(response_time_parsed = seconds_to_period(CAD_Event_Response_Time_Seconds_SUM)) 
+
+# Long to Short Response Time
+rmarkdown::paged_table(cad %>%
+  select(event_date, response_time_parsed, Case_Type_Final_Desc) %>%
+  arrange(-response_time_parsed)
+)
+  
+```
+
+With the times parsed into periods and sorted from longest to shortest time, we can see that the longest time was 170 days and the case was a test call. This is probably a candidate for excluding. For completeness, below the data displayed sorted from shortest to longest, so that it is easier to see what the short response times are.
+
+```{r short to long response time}
+# Short to Long Response Time
+rmarkdown::paged_table(cad %>%
+  select(event_date, response_time_parsed, Case_Type_Final_Desc) %>%
+  arrange(response_time_parsed)
+)
+  
+```
+
+## Total Service Time
+```{r total service time}
+summary(cad$Total_Service_Time_Seconds_SUM)
+
+```
+
+The distribution for total service time on events is strange. There are 221 events missing a total service time. Additionally, there is at least one event that had a negative total service time recorded. First, let's see how many negative values we have. 
+
+
+```{r total service time negs}
+## Total Service Time Negative Values
+knitr::kable(cad %>%
+  filter(Total_Service_Time_Seconds_SUM <0) %>%
+  select(event_date, Total_Service_Time_Seconds_SUM, response_time_parsed, Case_Type_Final_Desc) %>%
+  arrange(Total_Service_Time_Seconds_SUM),
+  caption = "Table 7: Total Service Time",
+  col.names = c("Date", "Service Time (Seconds)", "response time parsed", "Case Type Final"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+
+There are only 7 events in the dataset with negative values. When we include information like the event date, parsed response time, and case description type, we notice that two of these are duplicates. The other thing that stands out is that these events were all recorded on the same date, November 3rd. It is possible that the negative values were a recording error that occurred that day. We could also check for the average service time on other events of a similar type to see if the absolute value of total service time is reasonable. 
+
+Now, let's look at the NA values. 
+```{r total service time NAs}
+## Total Service Time NAs
+rmarkdown::paged_table(cad %>%
+  filter(is.na(Total_Service_Time_Seconds_SUM)) %>%
+  select(event_date, Total_Service_Time_Seconds_SUM, response_time_parsed, Case_Type_Final_Desc) %>%
+  arrange(event_date)
+)
+
+```
+The events with missing values vary on case types. There appears to be some duplicates, e.g., the assault-DV case on January 13th. Again, it seems like event date and response time would be useful for identifying duplicates this dataset. 
+
+For the sake of consistency, I parsed the total service time into time periods as I did with the response time. See some of the output below. 
+
+```{r total service time parsed}
+## Service Time parsed into periods
+cad <- cad %>%
+  mutate(total_service_time_parsed = seconds_to_period(Total_Service_Time_Seconds_SUM)) 
+
+# Long to Short Response Time
+rmarkdown::paged_table(cad %>%
+  select(event_date,
+         total_service_time_parsed,
+         response_time_parsed,
+         Case_Type_Final_Desc, 
+         Case_Type_Initial_Desc) %>%
+  arrange(-total_service_time_parsed)
+)
+
+```
+
+With the parsed by period version of service time, we see that the upper end of the service time distribution is 2 days.
+
+
+## Spatial Object
+
+Before transforming the dataframe into a spatial object, the calls with missing or invalid coordinates need to be removed. After filtering those events out, the transformed spatial object contains 459,132 calls with locations. There were 21,679 calls for service that do not have valid coordinates. Mapping all of these calls as points results in over-plotting as shown below.
+
+
+```{r spatial object, warning=F, message=F}
+## Transform to Spatial Object
+cad_sf <- cad %>% 
+  filter(Dispatch_Blurred_Longitude <-121 & Dispatch_Blurred_Latitude > 46) %>%  
+  st_as_sf(coords=c("Dispatch_Blurred_Longitude", "Dispatch_Blurred_Latitude"),
+           crs=4326)
+```
+
+```{r point mapping}
+## Build point map
+cad_valid_coords <- cad %>%
+  filter(Dispatch_Blurred_Longitude <-121 & Dispatch_Blurred_Latitude > 46) 
+
+# seattle_base <- get_googlemap(
+#     "Seattle, Washington",
+#     zoom = 11,
+#     scale = 2,
+#     maptype = "roadmap")
+# 
+# seattle_points <- ggmap(seattle_base, extent ="panel") +
+#   geom_point(data = cad_valid_coords, aes(x=Dispatch_Blurred_Longitude, y=Dispatch_Blurred_Latitude), size = 0.1, alpha = 0.05) +
+#    # coord_equal() +
+#   xlab('Longitude') +
+#   ylab('Latitude') +
+#   ggtitle("Calls for Service in 2019", subtitle="Seattle, WA")
+# 
+# ggsave(filename="seattle_points.jpeg",
+#        plot=seattle_points,
+#        width=6,
+#        height=6,
+#        units = "in")
+
+```
+
+```{r overplotted map, echo=F, out.width = '90%'}
+knitr::include_graphics("seattle_points.jpeg")
+
+```
+
+There are other approaches for visualizations that would be more informative. One approach is to create a point density map to show where the highest and lowest number of events per area occurred in the city. Another approach is to aggregate the points to meaningful geographic units like zipcodes or neighborhoods. The following sections demonstrate these approaches.
+
+## Point Density Mapping
+
+This interactive map clusters the points that are proximate. Zoom into different parts of the city to where clusters tend to occur. 
+```{r points leaflet, warning=F, message=F}
+## Interactive Map of all points
+leaflet(cad_sf) %>% 
+  addTiles() %>% addMarkers(
+  clusterOptions = markerClusterOptions()
+) 
+
+```
+
+```{r make contour lines, warning=F, message=F}
+## KDE CONTOURS
+cad_coords <- matrix(unlist(cad_sf$geometry), ncol = 2, byrow =T)
+
+kde <- bkde2D(cad_coords,
+              bandwidth=c(.0038, .0058), gridsize = c(100,100))
+CL <- contourLines(kde$x1 , kde$x2 , kde$fhat)
+
+## EXTRACT CONTOUR LINE LEVELS
+LEVS <- as.factor(sapply(CL, `[[`, "level"))
+NLEV <- length(levels(LEVS))
+
+## CONVERT CONTOUR LINES TO POLYGONS
+pgons <- lapply(1:length(CL), function(i)
+    Polygons(list(Polygon(cbind(CL[[i]]$x, CL[[i]]$y))), ID=i))
+spgons = SpatialPolygons(pgons)
+
+```
+
+**Smoothed Point Density Map**
+
+The interactive map below shows the areas with high density of calls. Only areas with statistically significant densities are mapped. Highest density areas are in yellow and lowest are red. 
+```{r leaflet of stat dens, warning=F, message=F}
+## Leaflet of Hotspots
+leaflet(spgons) %>%
+  addTiles() %>%
+  addPolygons(color = heat.colors(NLEV, NULL)[LEVS])
+
+```
+
+
+
+## Precinct Aggregation & Mapping
+
+Now, let's turn to by visualizing the frequency of events in different geographic regions of Seattle. In one of the prior sections, I showed the frequency of events per precinct. However, approximately 5,000 of the calls did not have a precinct listed. Now that the dataframe has been transformed to a spatial object, I can identify a precinct for those locations based on which precinct each coordinate pair lies within. 
+
+```{r events per precinct, include=F, warning=F, message=F}
+## Geoprocess precincts
+precincts_sf <- st_read(paste0(wd,
+                               shp_path, 
+                               precs_path, 
+                          "geo_export_8e9605ae-b15a-49cc-bcbd-73d6fabe122e.shp"),
+                        quiet=F
+                        )
+
+```
+
+```{r table precincts, warning=F, message=F}
+## Geoprocess precincts
+precincts_sf <- precincts_sf %>%
+    st_transform(., crs = st_crs(cad_sf))
+ 
+## Events per precinct
+events_per_precinct <- cad_sf %>%
+  st_set_crs(., st_crs(precincts_sf)) %>%
+  st_join(.,
+          precincts_sf,
+          join = st_within) %>%
+  group_by(name) %>%
+  summarize(events = n())  %>%
+  st_set_geometry(NULL) %>%
+  mutate(precinct = recode_factor(name,
+                         "E" = "EAST",
+                         "N" = "NORTH",
+                         "S" = "SOUTH",
+                         "SW" = "SOUTHWEST",
+                         "W" = "WEST"
+                         )
+         )
+
+knitr::kable(events_per_precinct %>%
+               select(-name) %>%
+               relocate(precinct, events) %>%
+               arrange(-events) %>%
+               mutate(events = scales::comma(events)), 
+             caption = "Service Calls per precinct, spatial overlay version",
+             col.names = c("Precinct", "# Calls")
+)
+
+```
+
+A couple of things standout from using the spatial overlay approach to assign precincts. First, the number of points that are not assigned to a precinct is 1,131. The reason these points are not assigned is because they lie outside of the precinct boundaries (see the map below). To make use all of these points, the best thing to do would be to keep the precincts that were provided in the original dataset. Then merge in the spatial overlay precincts for the subset of events that did not have valid coordinates. Finally, if there are still points missing precinct assignments, assign them to the precinct that they are nearest to. Let's do that and then visualize the results.
+
+
+```{r calls per precinct mapped, warning=F, message=F}
+## Combine precinct assignments - Seattle PD classified & spatial overlay
+events_precincts <- cad_sf %>%
+  st_set_crs(., st_crs(precincts_sf)) %>%
+  st_join(.,
+          precincts_sf,
+          join = st_within) %>% 
+  st_set_geometry(NULL) %>%
+  mutate(precinct = recode_factor(name,
+                         "E" = "EAST",
+                         "N" = "NORTH",
+                         "S" = "SOUTH",
+                         "SW" = "SOUTHWEST",
+                         "W" = "WEST"
+                         ),
+         precinct = coalesce(precinct, Precinct)
+         ) %>%
+  select(-descriptio) %>% 
+  group_by(precinct) %>%
+  summarize(events = n())
+
+invalid_geoms_precincts <- cad %>%
+  filter(Dispatch_Blurred_Longitude >-121 & Dispatch_Blurred_Latitude < 46) %>%
+  group_by(Precinct) %>% 
+  summarize(Events = n()) 
+
+merged_events_per_precinct_sf <- precincts_sf %>%
+  mutate(Precinct = recode_factor(name,
+                         "E" = "EAST",
+                         "N" = "NORTH",
+                         "S" = "SOUTH",
+                         "SW" = "SOUTHWEST",
+                         "W" = "WEST"
+                         )) %>%
+  left_join(., invalid_geoms_precincts, by = c("Precinct")) %>%
+  left_join(., events_precincts, by = c("Precinct" = "precinct")) %>%
+  mutate(total_events = (Events + events))
+
+## Extract points outside of precinct boundaries
+outside_precincts_points <- cad_sf[!lengths(st_intersects(cad_sf, precincts_sf)), ]
+
+## Visualize 2019 events per precinct
+prec_pal <- colorNumeric(
+  palette = "Purples",
+  domain = merged_events_per_precinct_sf$total_events
+)
+
+leaflet() %>%
+  addTiles() %>% 
+  addPolygons(
+    data = merged_events_per_precinct_sf %>% st_transform(crs = 4326),
+    fillColor = ~prec_pal(total_events),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~Precinct) %>% 
+  addCircles(
+    data = outside_precincts_points,
+    color = 'orange',
+    fill = T,
+    radius = 1,
+    label = ~Case_Type_Final_Desc, 
+  ) %>%
+  addLegend(
+    data = merged_events_per_precinct_sf,
+    pal = prec_pal,
+    values = ~total_events,
+    title = "2019 Service Calls<br>per Precinct"
+  )
+
+```
+
+
+The map shows not only the events per precinct, but also those events that are outside of the precinct boundaries. **NOTE: I assigned the "outlying" points to the nearest precinct for the precinct layer. I included them in the visual just to show that some of the locations do lie outside of the the city limits.**
+
+
+## Zipcode Aggregation & Mapping
+Another aggregation we can perform and visualize is at the zipcode level. Zipcode boundaries were pulled from Seattle's Open Data website.
+
+```{r aggregate to zipcodes, include=F, echo=F, warning=F, message=F}
+## Zip code aggregation
+king_zips_sf <- 
+  st_read(
+    "https://opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson"
+    )
+```
+
+The table below lists the count of events per zipcode. There is a sizable range in calls per zipcode from 7 to 46,396. The map below shows the counts per zipcode.
+
+```{r table zip, warning=F, message=F}
+## Events per zip
+events_per_zip <- cad_sf %>%
+  st_join(.,
+          king_zips_sf,
+          join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(ZIPCODE) %>%
+  summarize(events = n())
+
+events_per_zip_sf <- king_zips_sf %>%
+  left_join(., events_per_zip, by = c("ZIPCODE")) %>%
+  filter(!is.na(events))
+  
+knitr::kable(events_per_zip_sf %>%
+  select(ZIPCODE, events) %>% 
+    st_set_geometry(NULL) %>%
+  arrange(-events) %>% 
+    mutate(events = scales::comma(events)), 
+  caption = "Calls for Service per zipcode",
+             col.names = c("Zipcode", "# Calls")
+)
+
+```
+
+```{r visualize zips, warning=F, message=F}
+## Visualize 2019 events per zip
+zips_pal <- colorNumeric(
+  palette = "Reds",
+  domain = events_per_zip_sf$events
+)
+
+leaflet() %>%
+  addTiles() %>% 
+  addPolygons(
+    data = events_per_zip_sf,
+    fillColor = ~zips_pal(events),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~ZIPCODE) %>% 
+  addLegend(
+    data = events_per_zip_sf,
+    pal = zips_pal,
+    values = ~events,
+    title = "2019 Calls<br>per Zipcode"
+  )
+
+```
+
+Zipcodes in the core of the city tend to have the highest counts. The zipcodes along the southeastern edge of the city also have relatively high counts, especially compared to the zipcodes along the southwestern side of the city. 
+
+## Neighborhood Aggregation & Mapping
+
+The Seattle Open Data website also makes neighborhood boundaries available. In the table below, the events were aggregated to the neighborhoods. This should allow us to drill down to smaller units than the zipcodes. The neighborhoods and their counts are also featured in the map below. We see that the neighborhoods in the city's core like the CBD, Broadway, and Pioneer Square had the highest calls. Just to the south of the city's core, the Industrial District also had a relatively high number of calls. In the northern half of the city, the University District is the neighborhood with the highest number of calls.  
+```{r aggregate nhoods, include=F, echo=F, warning=F, message=F}
+nhoods_sod_sf <- 
+  st_read(
+    "https://opendata.arcgis.com/datasets/b76cdd45f7b54f2a96c5e97f2dda3408_2.geojson"
+    )
+```
+
+```{r nhood table, warning=F, message=F}
+## Events per neighborhood
+events_per_nhood <- cad_sf %>%
+  st_join(.,
+          nhoods_sod_sf,
+          join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(S_HOOD) %>%
+  summarize(events = n())
+
+events_per_nhood_sf <- nhoods_sod_sf %>%
+  left_join(., events_per_nhood, by = c("S_HOOD")) %>%
+  filter(!is.na(events))
+
+knitr::kable(events_per_nhood_sf %>%
+  select(S_HOOD, events) %>% 
+    st_set_geometry(NULL) %>%
+  arrange(-events) %>% 
+    mutate(events = scales::comma(events)), 
+  caption = "Events per neighborhood",
+             col.names = c("Neighborhood", "# Calls")
+)
+
+```
+
+```{r nhood visualize, warning=F, message=F}
+nhoods_pal <- colorNumeric(
+  palette = "Oranges",
+  domain = events_per_nhood_sf$events
+)
+
+leaflet() %>%
+  addTiles() %>% 
+  addPolygons(
+    data = events_per_nhood_sf,
+    fillColor = ~nhoods_pal(events),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~S_HOOD) %>% 
+  addLegend(
+    data = events_per_nhood_sf,
+    pal = nhoods_pal,
+    values = ~events,
+    title = "2019 Calls<br>per Neighborhood"
+  )
+
+```
+
+
+**Potential Next steps for mapping/spatial analysis:**
+
+* Faceted maps of call locations subset by: 1) case type, 2)call priority, 3) clear by, 4) call type.
+* Density maps by any of the above categories. 
+* Space-time slice maps/diagrams for cases of interest.
+* Bring in census block groups and integrate ACS demographics.

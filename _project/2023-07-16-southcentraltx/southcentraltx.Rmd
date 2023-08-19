@@ -13,7 +13,7 @@ output:
 preview: climb-south-central-texas2.png
 ---
 
-This page is a work-in-progress. It features a few maps that I have created of South Central Texas, which is where I grew up. 
+This page features a few maps that I have created of South Central Texas, which is where I grew up. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)

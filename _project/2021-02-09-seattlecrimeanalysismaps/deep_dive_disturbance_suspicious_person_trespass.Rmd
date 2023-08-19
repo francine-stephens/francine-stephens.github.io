@@ -1,0 +1,1461 @@
+---
+title: "Seattle 911 Calls for Service - Deep Dive on Disturbance, Suspicious Person, and Trespass Cases"
+author: "Francine Stephens"
+date: "Last Updated: `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: hide
+    theme: united
+    highlight: tango
+---
+
+```{r setup, include=F, warning=F, message=F}
+knitr::opts_chunk$set(echo=F)
+
+## Libraries
+options(tidyverse.quiet = T)
+packages <- c(
+              "tidyverse",
+              "scales",
+              "naniar",
+              "lubridate",
+              "sf",
+              "sp",
+              "ggplot2",
+              "ggmap",
+              "maptools",
+              "tmap",
+              "raster",
+              "spatstat",
+              "plotly",
+              "KernSmooth",
+              "spdep",
+              "spDataLarge",
+              "tigris",
+              "leaflet",
+              "RColorBrewer", 
+              "censusapi", 
+              "tidycensus", 
+              "units", 
+              "mapboxapi"
+              )
+lapply(packages, library, character.only = T)
+options(dplyr.summarise.inform = F)
+
+## Local Paths 
+setwd("~/Projects/seattle911")
+wd <- getwd()
+shp_path <- "/shp"
+precs_path <- "/Spd_Precincts/"
+sectors_path <- "/SPD_Beats_WGS84/"
+
+## API
+mb_access_token("sk.eyJ1IjoiZnJhbmNpbmVzdGVwaGVucyIsImEiOiJja2ljb3VrczMwdDdhMnhsNjA4Yjh1c2h1In0.WJjq6TysT6zZZnaxsN0s5g", overwrite = T)
+readRenviron("~/.Renviron")
+
+## PARAMS
+wgs <- 4326
+proj <- 2285  # NAD 83 USft
+
+```
+
+
+The goal of this set of analyses is to take a deeper dive into the 2019 Seattle 911 calls for service data. To follow up on the [preliminary exploratory analysis](https://francine-stephens.github.io/francinestephens.github.io/cad19_eda.html), we will focus on three types of cases - Disturbance, Suspicious person, and trespass. The questions we want to address here include the following:
+
+1) Where were each of the these types of cases commonly occurring? 
+2) How were these three types of cases resolved?
+3) Does the type of resolution differ by location? 
+
+
+## Cases of Interest - Disturbance, Suspicious Person, & Trespass
+
+To start, we will reduce the 2019 calls for service data to the three case types of interest. The frequencies of each type are shown below in Table 1. The number of calls about disturbance cases are nearly double the amount about suspicious person and almost quadruple the number of trespass calls.
+
+```{r cad data import, echo=F, warning=F, message=F, include=F}
+## IMPORT CAD DATA AND REDUCE TO FOCAL CASE TYPES
+cad <- readRDS("cad_2019_data.rds")
+
+cad <- cad %>%
+  mutate(event_datetime = mdy_hm(Event_First_Dispatch_Time_ATTR),
+         event_date = as.Date(event_datetime),
+         event_month = month(event_datetime, label=T), 
+         Call_Priority_Code = factor(Call_Priority_Code,
+                                     levels = c("-1",
+                                                "1",
+                                                "2",
+                                                "3",
+                                                "4",
+                                                "5",
+                                                "6",
+                                                "7",
+                                                "8",
+                                                "9")),
+         case_type_final_desc_first = str_trim(str_extract(Case_Type_Final_Desc, "[^-]+"),
+                                          side = c("both")), 
+         case_type_final_desc_second = str_trim(str_extract(Case_Type_Final_Desc, "[^-]*$"),
+                                           side = c("both")),
+         response_time_parsed = seconds_to_period(CAD_Event_Response_Time_Seconds_SUM),
+         total_service_time_parsed = seconds_to_period(Total_Service_Time_Seconds_SUM)
+  )
+
+focal_cases <- cad %>%
+  filter(str_detect(case_type_final_desc_first, 'DIST') |
+         Case_Type_Final_Desc == "DV - ARGUMENTS, DISTURBANCE (NO ARREST)" |
+         Case_Type_Final_Desc == "NOISE - DIST, GENERAL (CONST, RESID, BALL PLAY)" | 
+         Case_Type_Final_Desc == "NOISE - DISTURBANCE (PARTY, ETC)" |
+         case_type_final_desc_second == "SUSPICIOUS PERSON" |
+         str_detect(Case_Type_Final_Desc, "TRESPASS")) %>%
+    mutate(case_type = recode_factor(case_type_final_desc_first,
+                                     "DIST" = "Disturbance",
+                                     "DISTURBANCE, MISCELLANEOUS/OTHER" = "Disturbance",
+                                     "DISTURBANCE" = "Disturbance",
+                                     "DV" = "Disturbance",
+                                     "NOISE" = "Disturbance",
+                                     "SUSPICIOUS CIRCUM." = "Suspicious Person",
+                                     "TRESPASS" = "Trespass",
+                                     "PROWLER" = "Trespass")
+           )
+
+## SUBSET INTO DATAFRAMES OF INTEREST
+disturbances_sf <- cad %>% 
+  filter(str_detect(case_type_final_desc_first, 'DIST')) %>%
+  filter(Dispatch_Blurred_Longitude != -1 | Dispatch_Blurred_Latitude != -1) %>% 
+  st_as_sf(coords=c("Dispatch_Blurred_Longitude", "Dispatch_Blurred_Latitude"),
+           crs=wgs)
+
+suspicious_person_sf <- cad %>%
+  filter(case_type_final_desc_second == "SUSPICIOUS PERSON") %>%
+  filter(Dispatch_Blurred_Longitude != -1 | Dispatch_Blurred_Latitude != -1) %>% 
+  st_as_sf(coords=c("Dispatch_Blurred_Longitude", "Dispatch_Blurred_Latitude"),
+           crs=wgs)
+  
+
+trespass_sf <- cad %>%
+  filter(str_detect(Case_Type_Final_Desc, "TRESPASS")) %>%
+  filter(Dispatch_Blurred_Longitude != -1 | Dispatch_Blurred_Latitude != -1) %>% 
+  st_as_sf(coords=c("Dispatch_Blurred_Longitude", "Dispatch_Blurred_Latitude"),
+           crs=wgs)
+
+
+## IMPORT SHAPEFILES
+seattle_beats_sf <- st_read(paste0(wd,
+                             shp_path, 
+                             sectors_path, 
+                             "SPD_Beats_WGS84.shp"),
+                             quiet = F
+                        )
+
+# king_zips_sf <- 
+#   st_read(
+#     "https://opendata.arcgis.com/datasets/83fc2e72903343aabff6de8cb445b81c_2.geojson"
+#     )
+
+## CREATE GEOGRAPHIES
+beats_proj <- seattle_beats_sf %>%
+  st_transform(., crs = proj) %>%
+  mutate(area_sqmi = st_area(.),
+         area_sqmi = as.numeric(set_units(area_sqmi, mi^2))
+  )
+
+sectors_sf <- seattle_beats_sf %>%
+  group_by(sector) %>%
+  summarize(beats = n())
+
+sectors_proj <- sectors_sf %>%
+  st_transform(., crs = proj) %>%
+  mutate(area_sqmi = st_area(.),
+         area_sqmi = as.numeric(set_units(area_sqmi, mi^2))
+  )
+  
+precincts_sf <- seattle_beats_sf %>% 
+  group_by(first_prec) %>%
+  summarize(sectors = n()) %>% 
+  mutate(precinct = recode_factor(first_prec,
+                         "E" = "EAST",
+                         "N" = "NORTH",
+                         "S" = "SOUTH",
+                         "SW" = "SOUTHWEST",
+                         "W" = "WEST",
+                         "NA" = "NA"
+                         )
+         )
+
+precincts_proj <- precincts_sf %>% 
+  st_transform(., crs = proj) %>%
+  mutate(area_sqmi = st_area(.),
+         area_sqmi = as.numeric(set_units(area_sqmi, mi^2)),
+         precinct = recode_factor(first_prec,
+                         "E" = "EAST",
+                         "N" = "NORTH",
+                         "S" = "SOUTH",
+                         "SW" = "SOUTHWEST",
+                         "W" = "WEST",
+                         "NA" = "NA"
+                         )
+         )
+
+seattle_sf <- seattle_beats_sf %>%
+  mutate(city = "Seattle") %>%
+  group_by(city) %>%
+  summarize(beats = n())
+
+seattle_proj <- seattle_sf %>%
+  st_transform(., crs = proj) %>%
+  mutate(area_sqmi = st_area(.),
+         area_sqmi = as.numeric(set_units(area_sqmi, mi^2))
+  ) 
+
+# king_zips_proj <- king_zips_sf %>%
+#   st_transform(., crs = proj) %>%
+#   mutate(area_sqmi = st_area(.),
+#          area_sqmi = as.numeric(set_units(area_sqmi, mi^2))
+#   ) 
+
+```
+
+```{r focal cases freq table}
+## CASE TYPES TABLE
+knitr::kable(focal_cases %>% 
+             count(case_type), 
+             caption = "Table 1: Frequency of Focal Case Types",
+  col.names = c("Case Type", "# of Calls"), 
+  format.args = list(big.mark = ",")
+)
+
+```
+
+
+## Where are these 3 types of cases occurring? {.tabset .tabset-fade}
+```{r assign locations, warning=F, message=F}
+#summary(focal_cases)
+  # 47 cases don't have a precinct/sector
+          # focal_cases %>%
+          #   filter(Precinct == "UNKNOWN") %>%
+          #   select(Dispatch_Blurred_Latitude, Dispatch_Blurred_Longitude) %>%
+          #   arrange(Dispatch_Blurred_Latitude)
+
+    # 23 of these cases have invalid lat and long, so they will need to be dropped. 
+    # We can assign the other 24
+         # focal_cases %>%
+         #  filter(Precinct != "UNKNOWN",
+         #         Dispatch_Blurred_Latitude == -1) %>%
+         #  select(Precinct, Dispatch_Blurred_Latitude, Dispatch_Blurred_Longitude)
+    # 5,780 cases with a precinct DO NOT have a valid lat/lng. 
+
+## CREATE SPATIAL OBJECT OF ONLY CASES WITH VALID LAT/LNGS (FOR POINT MAPS)
+focal_cases_pts_sf <- focal_cases %>%
+  filter(Dispatch_Blurred_Longitude != -1 | Dispatch_Blurred_Latitude != -1) %>% 
+  st_as_sf(coords=c("Dispatch_Blurred_Longitude", "Dispatch_Blurred_Latitude"),
+           crs=wgs) 
+    # 5,780 dropped b/c lack valid lat and long
+focal_cases_pts_proj <- st_transform(focal_cases_pts_sf, crs = proj)
+ 
+## CREATE PRECINCT VIABLE DATAFRAME 
+focal_cases_add_precinct_sf <- focal_cases_pts_sf %>%
+  st_join(., precincts_sf, join = st_within)
+
+## Identify the zipcodes for each point
+# focal_cases_pts_sf <- focal_cases_pts_sf %>%
+#   st_join(.,
+#           king_zips_sf %>% st_transform(st_crs = wgs),
+#           join = st_within)
+# 
+# zips_in_extent <- focal_cases_pts_sf %>%
+#   group_by(ZIPCODE, case_type) %>%
+#   summarize(Calls = n()) %>%
+#   st_set_geometry(NULL)
+
+```
+
+### City-wide Distribution
+```{r interactive point map of different cases}
+## INTERACTIVE MAP POINTS COLOR LAYERS BY TYPE OF CASE
+cases_pal <- colorFactor(c("red", "blue", "green"),
+                         domain = c("Disturbance", "Suspicious Person", "Trespass"))
+
+# leaflet() %>% 
+#   addProviderTiles(providers$CartoDB.Positron) %>% 
+#   addCircleMarkers(
+#     data = disturbances_sf,
+#     radius = 0.5,
+#     color = "#FF0000",
+#     group = "Disturbance",
+#     stroke = F,
+#     fillOpacity = 0.5
+#     ) %>%
+#   addCircleMarkers(
+#     data = suspicious_person_sf,
+#     radius = 0.5,
+#     color = "#52E74B",
+#     group = "Suspicious Person",
+#     stroke = F,
+#     fillOpacity = 0.5
+#     ) %>%
+#   addCircleMarkers(
+#     data = trespass_sf,
+#     radius = 0.5,
+#     color = "#6754D8",
+#     group = "Trespass",
+#     stroke = F,
+#     fillOpacity = 0.5
+#     ) %>% 
+#   addLayersControl(
+#     overlayGroups = c("Disturbance", "Suspicious Person", "Trespass"),
+#     options = layersControlOptions(collapsed = F)
+#   )
+  
+```
+
+Table 2 breaks down the density of calls for each type of case per square mile in Seattle. <span style="color: orange;">Include kernel density point map instead? Return to this. </span>
+
+```{r density of case types, warning=F, message=F}
+## Seattle density
+seattle_sqmi <- seattle_proj$area_sqmi
+
+seattle_all_cases_dens <- focal_cases %>%
+  group_by(case_type) %>%
+  summarize(Calls = n()) %>%
+  mutate(calls_per_sqmi = round(Calls/seattle_sqmi, digits = 2))
+
+knitr::kable(seattle_all_cases_dens,
+  caption = "Table 2: Frequency and Density of Focal Case Types in Seattle",
+  col.names = c("Case Type", "# of Calls", "Calls per Sq. Mile"), 
+  format.args = list(big.mark = ",")
+)
+  
+```
+
+```{r compute densities at different geographic levels}
+## PRECINCT DENSITY
+precinct_all_cases_dens <- focal_cases_add_precinct_sf %>%
+  st_set_geometry(NULL) %>%
+  group_by(Precinct, case_type) %>%
+  summarize(Calls = n()) %>%
+  left_join(., precincts_proj, by = c("Precinct" = "precinct")) %>%
+  mutate(calls_per_sqmi = round(Calls/area_sqmi, digits = 2)) %>%
+  select(Precinct, case_type, Calls, calls_per_sqmi)
+
+## SECTOR DENSITY
+sector_all_cases_dens <- focal_cases_pts_proj %>% 
+  st_join(., sectors_proj, join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(sector, case_type) %>%
+  summarize(Calls = n()) %>%
+  left_join(., sectors_proj, by = "sector") %>%
+  mutate(calls_per_sqmi = round(Calls/area_sqmi, digits = 2)) %>%
+  select(sector, case_type, Calls, calls_per_sqmi)
+
+## BEAT DENSITY
+beat_all_cases_dens <- focal_cases_pts_proj %>% 
+  st_join(., beats_proj, join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(beat, case_type) %>%
+  summarize(Calls = n()) %>% 
+  left_join(., beats_proj, by = "beat") %>%
+  mutate(calls_per_sqmi = round(Calls/area_sqmi, digits = 2)) %>%
+  select(beat, case_type, Calls, calls_per_sqmi)
+
+```
+
+### By Precinct
+
+Even when we limit our focus to disturbance, trespass, and suspicious person cases, the north and west precincts lead in the number calls. Table 3 indicates that the north and west precincts together had just under 60% of all calls for the three types of cases. Furthermore, the north had just about double the number of calls for these types of cases than the south precinct.
+
+*NOTE: unknown is designated as the southernmost and northernmost boundaries of the city as well as the harbor areas.* 
+
+```{r table of cases by precinct results, warning=F, message=F}
+## Calls per precinct - All 3 types
+calls_per_precinct_3cases <- focal_cases_add_precinct_sf %>%
+  st_set_geometry(NULL) %>%
+  group_by(Precinct) %>%
+  summarize(Calls = n()) %>%
+  arrange(-Calls) %>%
+  mutate(percent = round((Calls/sum(Calls)) * 100, digits=2),
+         Calls = scales::comma(Calls))
+
+# Table of all 3 cases by precinct
+knitr::kable(calls_per_precinct_3cases,
+  caption = "Table 3: Calls By Precinct for all 3 Case Types",
+  col.names = c("Precinct", "# Calls", "%"))
+
+```
+
+The bar graph below (Figure 1) breaks down the types of cases within each precinct. Table 4, just below Figure 1, presents the frequencies, percentages, and densities for each case type and precinct. 
+
+**Disturbances were the majority of cases in all precincts.** 
+Although over 50% of the focal cases are disturbance in all five precincts, the northern precinct had about 4 to 5 percentage point fewer disturbance cases than the other four precincts. This seems to be driven by the fact that the northern precinct had a sizable amount of suspicious person cases - 35.5%. 
+
+**The north and southwest precincts led in the share of suspicious persons.** 
+Just over one-third of the calls in these two precincts are about suspicious persons. In fact, in the southwest precinct, there were only 4,000 fewer calls about suspicious persons than disturbances. 
+
+**The western precinct had the highest number and share of trespass calls.** 
+22% of all calls in the western precinct were reports of trespassing. Notice that in the western precinct the trespass and suspicious person calls have very similar percentages. No other precincts had two case types that were equally distributed. Lastly, the number of calls about trespassing in the western precinct - 10,216 - doubled the number of calls in each of the other precincts.
+
+**In terms of density, the east and west precincts stood out for having the highest density of calls for all three types of cases.** 
+The density of disturbance and suspicious persons calls in the east precinct edges out the density of those cases in the west. However, with trespass cases, the west precinct's density is higher than the east precinct. 
+
+```{r graph of precinct x type, message=F, warning=F}
+## Calls per precinct x Type Graph
+calls_per_precinct_by_case <- focal_cases_add_precinct_sf %>%
+  group_by(Precinct, case_type) %>%
+  summarize(Calls = n()) %>%
+  arrange(Precinct, case_type) %>%
+  mutate(percent = round((Calls/sum(Calls)) * 100, digits=2)) %>%
+  filter(Precinct != "NA")
+
+focal_cases_precinct_stacked <- calls_per_precinct_by_case %>%
+  filter(Precinct != "UNKNOWN") %>%
+  ggplot(. , aes(fill=case_type, y=Calls, x=Precinct)) + 
+  geom_bar(position="fill", stat="identity") +
+  scale_fill_brewer(palette = "Set1") +
+  labs(
+    x = "Precinct",
+    y = "Proportion of Calls",
+    title = "Fig. 1: Distribution of Cases within Precincts",
+    subtitle = "Seattle, WA",
+    fill = "Case Type",
+    caption = "Seattle, WA 2019"
+  ) +
+  coord_flip() + 
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "vertical",
+    axis.text.x = element_text(hjust=1)
+    )
+  
+focal_cases_precinct_stacked %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+
+```{r table of precinct x call type}
+## Calls per precinct x Type Table
+calls_per_precinct_by_case_tab <- calls_per_precinct_by_case %>%
+               st_set_geometry(NULL) %>%
+               left_join(., precinct_all_cases_dens,  by = c("Precinct" = "Precinct", "case_type" = "case_type")) %>%
+               select(-Calls.y) %>%
+               relocate(Precinct, .after = "case_type") %>%
+  filter(Precinct != "UNKNOWN") %>%
+  arrange(case_type, -percent)
+
+knitr::kable(calls_per_precinct_by_case_tab,
+  caption = "Table 4: Distribution of Calls By Precinct & Case Type",
+  format.args = list(big.mark = ","),
+  col.names = c("Case", "Precinct", "# Calls", "% in Precinct", "Calls per Sq. Mi.")
+  )
+
+```
+
+
+### By Sector
+```{r map sectors sector x case type graph, message=F, warning=F}
+# Sector map dataframes
+sector_dist_for_map <- sectors_sf %>%
+  right_join(., sector_all_cases_dens, by = "sector")  %>% 
+  filter(case_type == "Disturbance",
+         !is.na(sector))
+
+sector_sus_for_map <- sectors_sf %>%
+  right_join(., sector_all_cases_dens, by = "sector") %>% 
+  filter(case_type == "Suspicious Person",
+         !is.na(sector))
+ 
+sector_tres_for_map <- sectors_sf %>%
+  left_join(., sector_all_cases_dens, by = "sector") %>% 
+  filter(case_type == "Trespass",
+         !is.na(sector))
+
+```
+
+**Interactive Map of Sector Density**
+
+The different layers show the sector density for the case types. Check one layer at a time and hover your cursor over the sector polygons to get the sector name and density. 
+
+**Sectors in the core, particularly, M, K, and E have the highest densities.** Sectors M, K, and D belong to the west precinct. Sector E is part of the east precinct.
+
+Sector B has the highest density for the north precinct. In the southwest precinct, Sector F has the highest density. Within the south precinct, Sector S has the highest density.
+
+```{r sector maps}
+## Create data frames for maps
+density_sec_dist_pal <- colorNumeric(
+  palette = "Reds",
+  domain = sector_dist_for_map$calls_per_sqmi
+)
+
+density_sec_sus_pal <- colorNumeric(
+  palette = "Blues",
+  domain = sector_sus_for_map$calls_per_sqmi
+)
+
+density_sec_tres_pal <- colorNumeric(
+  palette = "Greens",
+  domain = sector_tres_for_map$calls_per_sqmi
+)
+
+leaflet() %>% 
+  addTiles() %>% 
+  addPolygons(
+    data = sector_dist_for_map,
+    fillColor = ~density_sec_dist_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Sector ", sector, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Disturbance"
+    ) %>% 
+  addPolygons(
+    data = sector_sus_for_map,
+    fillColor = ~density_sec_sus_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Sector ", sector, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Suspicious Person"
+    ) %>% 
+  addPolygons(
+    data = sector_tres_for_map,
+    fillColor = ~density_sec_tres_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Sector ", sector, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Trespass"
+    ) %>% 
+  addLayersControl(
+    overlayGroups = c("Disturbance", "Suspicious Person", "Trespass"),
+    position = "topright",
+    options = layersControlOptions(collapsed = F)
+  )
+
+```
+
+Figures 2.1 through 2.3 below show the number of cases in each sector. 
+
+**NOTE: Sector 99 - the northern and southern-most areas of land in the map - does not belong to a precinct.**
+
+*Disturbances*
+
+* In the western precinct, the high number of disturbance cases is driven by sectors K and D. These were some of the highest density sectors in the map above. 
+* In the eastern precinct, disturbance cases are driven by sector E. 
+* The southwestern precinct was the only precinct with cases relatively equally distributed across each of its sectors - W and F. 
+
+*Suspicious Person*
+
+* Sectors in the northern precinct - B and U - contain the most suspicious persons cases. Notice that in terms of density of suspicious persons cases, B and U do not stand out as having particularly high rates relative to the sectors in the west precinct.
+* The eastern precinct has sectors with the lowest amounts of cases - sectors M and U. 
+
+*Trespass* 
+
+* The distribution of trespass cases seems to mirror that of disturbances. 
+* K, M, and D sectors in the western precinct are among the top five sectors with trespass cases. * The eastern precinct also had large number of trespass cases, and the count is largely driven by sector E. 
+* The southwestern precinct's sectors had the fewest number of trespass cases (and the south to a lesser extent). 
+
+```{r lolliplot for disturbance cases by sector, warning=F, message=F}
+## Disturbance cases by sector Lolliplot
+sector_dist_for_map %>%
+  st_set_geometry(NULL) %>%
+  left_join(., seattle_beats_sf, by = "sector") %>%
+ggplot(., aes(x = Calls, y = reorder(sector, Calls), label = comma(Calls, accuracy=1))) +
+  geom_segment(aes(yend = sector), xend = 0, colour = "grey80") +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + #color = "red"
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig 2.1: Calls for Disturbance Cases by Sector",
+       x = "Calls",
+       y = "",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 0, hjust=0),
+  #panel.grid.major.y = element_line(colour = "grey60", linetype = "dashed")
+) 
+
+```
+
+```{r lolliplot sus for sectors, warning=F, message=F}
+## Resolution for Disturbance cases Lolliplot
+sector_sus_for_map %>%
+  st_set_geometry(NULL) %>%
+  left_join(., seattle_beats_sf, by = "sector") %>%
+ggplot(., aes(x = Calls, y = reorder(sector, Calls), label = comma(Calls, accuracy=1))) +
+  geom_segment(aes(yend = sector), xend = 0, colour = "grey80") +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + #color = "red"
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig 2.2: Calls for Suspicious Person Cases by Sector",
+       x = "Calls",
+       y = "",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 0, hjust = 0),
+  #panel.grid.major.y = element_line(colour = "grey60", linetype = "dashed")
+) 
+
+```
+
+```{r trespass cases by sector lolliplot, warning=F, message=F}
+## Resolution for Disturbance cases Lolliplot
+sector_tres_for_map %>%
+  st_set_geometry(NULL) %>%
+  left_join(., seattle_beats_sf, by = "sector") %>%
+ggplot(., aes(x = Calls, y = reorder(sector, Calls), label = comma(Calls, accuracy=1))) +
+  geom_segment(aes(yend = sector), xend = 0, colour = "grey80") +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + 
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig 2.3: Calls for Trespass Cases by Sector",
+       x = "Calls",
+       y = "",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 0, hjust = 0),
+  #panel.grid.major.y = element_line(colour = "grey60", linetype = "dashed")
+) 
+
+```
+
+
+### By Beat
+
+**Interactive Map of Beat Density**
+
+The different layers show the beat density for the case types. Check one layer at a time and hover your cursor over the beat polygons to get the beat name and density. 
+
+```{r beat map dataframes}
+# beat map dataframes
+beat_dist_for_map <- seattle_beats_sf %>%
+  right_join(., beat_all_cases_dens, by = "beat")  %>% 
+  filter(case_type == "Disturbance",
+         !is.na(beat))
+
+beat_sus_for_map <- seattle_beats_sf %>%
+  right_join(., beat_all_cases_dens, by = "beat")  %>%  
+  filter(case_type == "Suspicious Person",
+         !is.na(beat))
+ 
+beat_tres_for_map <- seattle_beats_sf %>%
+  right_join(., beat_all_cases_dens, by = "beat")  %>% 
+  filter(case_type == "Trespass",
+         !is.na(beat))
+
+```
+
+**Interactive Beat Density Map**
+```{r interactive beat map}
+## Create data frames for maps
+density_beat_dist_pal <- colorNumeric(
+  palette = "Reds",
+  domain = beat_dist_for_map$calls_per_sqmi
+)
+
+density_beat_sus_pal <- colorNumeric(
+  palette = "Blues",
+  domain = beat_sus_for_map$calls_per_sqmi
+)
+
+density_beat_tres_pal <- colorNumeric(
+  palette = "Greens",
+  domain = beat_tres_for_map$calls_per_sqmi
+)
+
+leaflet() %>% 
+  addTiles() %>% 
+  addPolygons(
+    data = beat_dist_for_map,
+    fillColor = ~density_beat_dist_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Beat ", beat, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Disturbance"
+    ) %>% 
+  addPolygons(
+    data = beat_sus_for_map,
+    fillColor = ~density_beat_sus_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Beat ", beat, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Suspicious Person"
+    ) %>% 
+  addPolygons(
+    data = beat_tres_for_map,
+    fillColor = ~density_beat_tres_pal(calls_per_sqmi),
+    color = "Black",
+    opacity = 0.5,
+    fillOpacity = 0.5,
+    weight = 1.5,
+    label = ~paste0("Beat ", beat, " - ",
+      format(calls_per_sqmi, big.mark = ","), " mi^2"),
+    group = "Trespass"
+    ) %>% 
+  addLayersControl(
+    overlayGroups = c("Disturbance", "Suspicious Person", "Trespass"),
+    position = "topright",
+    options = layersControlOptions(collapsed = F)
+  )
+
+```
+
+Figures 3.1 through 3.3 show the number of cases in the three beats with the highest frequencies. Recall that beats are nested within sectors and sectors are nested within precincts. The letter in each of the beat names indicates the sector that the beat is located in. The color of the dot in the figures indicates the precinct the beat lies within. 
+
+*NOTE: The 99 sector does not have beats, so it is excluded in the figures below.* 
+
+*Disturbances*
+
+* West precinct beats K2 and K3 have the highest frequencies of disturbances. The K2 beat includes Pioneer Square, sporting complexes - T-Mobile Park and Lumen Field - and the Amtrak yard. Just to the east of Beat K2 is Beat K3, which encompasses the Chinatown/International District. 
+* The northern precinct beats had high frequencies as well, particularly beat U2, which is where the University of Washington is located. In the map above, you will notice it also has a relatively high density compared to its neighboring beats. 
+* The southwest precinct's top 3 beats are noticeably lower than the rest of the beats, with the exception of beat W2, which is around the lower-middle of the distribution.
+
+*Suspicious Person*
+
+* The top 3 beats are in the northern precinct. U2 - the beat encompassing the University of Seattle - is at the top, but beats N3 and B1 have similarly high frequencies. 
+* The southern precinct beat R2 is also quite high. It stands out for its case count being noticeably higher than the 2nd and 3rd highest beats in the southern precinct.
+* Beats in the east, south, and southwestern precincts have similar frequencies. 
+
+*Trespass*
+
+* The top 3 beats are in the western precinct - K2, K3, and M3. K2 and K3 also had substantial disturbance cases. M3 is the smallest beat in the city. It encloses the Central Business District. M3 consistently has the highest density of cases across all case types. 
+* Between the top 3 beats and the rest of the beats there is a appreciable drop-off in frequencies.
+* The top 3 east beats - E1, E2, and E3 - are the next highest. The frequencies for these three beats are about half that of the western beats. E1 and E2 split Capitol Hill. E3 appears to contain First Hill. 
+
+```{r lollipop for dist beats}
+## Disturbance cases by sector Lolliplot
+beat_dist_for_map %>% 
+  arrange(first_prec, -Calls) %>%
+  group_by(first_prec) %>%
+  mutate(rank_in_prec = min_rank(desc(Calls))) %>%
+  filter(rank_in_prec <= 3 & !is.na(first_prec)) %>%
+  ggplot(., aes(x = reorder(beat, Calls), y =  Calls, label = comma(Calls, accuracy=1))) +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + 
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.8, fontface = "bold") +  
+  labs(title = "Fig 3.1: Disturbance Cases by Beat - Top 3 Beats in Precinct",
+       x = "Beat",
+       y = "Calls",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_y_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  #panel.grid.major.y = element_blank(),
+  #axis.text.x = element_text(angle = 90, hjust=1),
+  panel.grid.major.x = element_line(colour = "grey60", linetype = "dashed")
+) 
+  
+```
+
+```{r lolliplot beats sus}
+## Suspicious person cases by sector Lolliplot
+beat_sus_for_map %>% 
+  arrange(first_prec, -Calls) %>%
+  group_by(first_prec) %>%
+  mutate(rank_in_prec = min_rank(desc(Calls))) %>%
+  filter(rank_in_prec <= 3 & !is.na(first_prec)) %>%
+  ggplot(., aes(x = reorder(beat, Calls), y =  Calls, label = comma(Calls, accuracy=1))) +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + 
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.8, fontface = "bold") +  
+  labs(title = "Fig 3.2: Suspicious Person Cases by Beat - Top 3 Beats in Precinct",
+       x = "Beat",
+       y = "Calls",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_y_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.x = element_line(colour = "grey60", linetype = "dashed")
+) 
+
+```
+
+```{r lolliplot trespass beat}
+## Trespass cases by sector Lolliplot
+beat_tres_for_map %>% 
+  arrange(first_prec, -Calls) %>%
+  group_by(first_prec) %>%
+  mutate(rank_in_prec = min_rank(desc(Calls))) %>%
+  filter(rank_in_prec <= 3 & !is.na(first_prec)) %>%
+  ggplot(., aes(x = reorder(beat, Calls), y =  Calls, label = comma(Calls, accuracy=1))) +
+  geom_point(size = 4, aes(color=factor(first_prec)), alpha=0.6) + 
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(size = 2.5, vjust= -0.8, fontface = "bold") +  
+  labs(title = "Fig 3.3: Trespass Cases by Beat - Top 3 Beats in Precinct",
+       x = "Beat",
+       y = "Calls",
+       color = "Precinct",
+       caption = "Seattle, WA 2019") + 
+  scale_y_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.x = element_line(colour = "grey60", linetype = "dashed")
+)
+
+```
+
+### Hot Spots
+
+**Getis-Ord GI* Hot and Cold Spots Interactive Map**
+
+The map below presents hot and cold spots for each type of case. All three layers are turned on. I recommend turning on one layer at a time and viewing. Then go back and select two layers at a time to compare differences. 
+
+*Disturbance* 
+
+* This type of case has the most hot spots. Sectors K, M, and E in the downtown/city's core make up a large cluster of hot spots. 
+* The north precinct has some significant hot spots scattered across multiple sectors - B, U, and L. 
+
+
+*Suspicious Person* 
+
+* Hot spots with this type of case tend to be in the same general areas as disturbance cases, but span a greater area. 
+* Many hot spots appear along the edges of beat boundaries, moreso than the disturbance cases.
+* This is the only case type with noticeable cold spots. They appear in all precincts, but the north precinct has the most. 
+
+*Trespass* 
+
+* Fewest hot spots with this case type. The downtown sectors are still hot spots. 
+* Besides the western precinct and the western part of the east precinct (nearest downtown), the northern precinct is the only other precinct with hot spots. They are located in Beats U2 (University of Washington) and J3. 
+
+
+```{r spatial objects sp and ppp, warning=F, message=F}
+## SP OBJECTS
+seattle_sp <- seattle_sf %>%
+  st_transform(., crs=proj) %>%
+  as(., "Spatial")
+seattle_Owin <- as.owin(seattle_sp)
+
+
+focal_cases_pts_sf_proj <- st_transform(focal_cases_pts_sf, crs=proj)
+focal_cases_pts_coords <- matrix(unlist(focal_cases_pts_sf_proj$geometry),
+                                      ncol = 2,
+                                      byrow =T)
+focal_cases_pts_ppp <- ppp(x = focal_cases_pts_coords[,1], 
+                           y = focal_cases_pts_coords[,2], 
+                           window = seattle_Owin,
+                           check = T)
+focal_cases_pts_sp <- focal_cases_pts_sf_proj %>%
+  as(., "Spatial")
+
+```
+
+```{r getis ord gi all focal cases, warning=F, message=F}
+# Create a regular grid of 1/8-mile-square crime areas via a raster
+pixelsize = 660
+box = round(extent(seattle_sp) / pixelsize) * pixelsize
+template = raster(box, crs = proj,
+	nrows = (box@ymax - box@ymin) / pixelsize, 
+	ncols = (box@xmax - box@xmin) / pixelsize)
+
+## GETIS DISTURBANCES
+disturbances_sp <- disturbances_sf %>%
+  st_transform(., crs = proj) %>%
+  as(., "Spatial")
+
+disturbances_sp$PRESENT = 1
+getisraster_dist = rasterize(disturbances_sp,
+                             template,
+                             field = 'PRESENT',
+                             fun = sum)
+getisgrid_dist = rasterToPolygons(getisraster_dist)
+
+# Create the list of neighbors
+neighbors_dist = poly2nb(getisgrid_dist)
+weighted_neighbors_dist = nb2listw(neighbors_dist, zero.policy=T)
+
+# Perform the local G analysis (Getis-Ord GI*)
+getisgrid_dist$HOTSPOT = as.vector(localG(getisgrid_dist$layer, 
+                                          weighted_neighbors_dist))
+
+# Color the grid cells based on the z-score
+breaks = c(-30, -1.96, -1, 1, 1.96, 30)
+palette=c("#0000FF80", "#8080FF80", "#FFFFFF80", "#FF808080", "#FF000080")
+col = palette[cut(getisgrid_dist$HOTSPOT, breaks)]
+
+# Plot
+# plot(getisgrid, col=col, border=NA) 
+# plot(seattle_sp, border="gray", add=T)
+
+
+## GETIS SUSPICIOUS PERSON
+sus_person_sp <- suspicious_person_sf %>%
+  st_transform(., crs = proj) %>%
+  as(., "Spatial")
+
+sus_person_sp$PRESENT = 1
+getisraster_sus = rasterize(sus_person_sp,
+                             template,
+                             field = 'PRESENT',
+                             fun = sum)
+getisgrid_sus = rasterToPolygons(getisraster_sus)
+
+# Create the list of neighbors
+neighbors_sus = poly2nb(getisgrid_sus)
+weighted_neighbors_sus = nb2listw(neighbors_sus, zero.policy=T)
+
+# Perform the local G analysis (Getis-Ord GI*)
+getisgrid_sus$HOTSPOT = as.vector(localG(getisgrid_sus$layer,
+                                         weighted_neighbors_sus))
+
+
+## GETIS TRESPASS
+trespass_sp <- trespass_sf %>%
+  st_transform(., crs = proj) %>%
+  as(., "Spatial")
+
+trespass_sp$PRESENT = 1
+getisraster_tres = rasterize(trespass_sp,
+                             template,
+                             field = 'PRESENT',
+                             fun = sum)
+getisgrid_tres = rasterToPolygons(getisraster_tres)
+
+# Create the list of neighbors
+neighbors_tres = poly2nb(getisgrid_tres)
+weighted_neighbors_tres = nb2listw(neighbors_tres, zero.policy=T)
+
+# Perform the local G analysis (Getis-Ord GI*)
+getisgrid_tres$HOTSPOT = as.vector(localG(getisgrid_tres$layer,
+                                         weighted_neighbors_tres))
+
+
+```
+
+```{r leaflet the grid for all 3, warning=F, message=F}
+## MAP HOT SPOTS ALL 3 CASES
+getisgrid_dist <- spTransform(getisgrid_dist, CRS("+init=epsg:4326"))
+getisgrid_sus <- spTransform(getisgrid_sus, CRS("+init=epsg:4326"))
+getisgrid_tres <- spTransform(getisgrid_tres, CRS("+init=epsg:4326"))
+
+getis_pal <- colorBin(
+  palette = c("#0000FF80", 
+              "#8080FF80", 
+              "#FFFFFF80", 
+              "#FF808080", 
+              "#FF000080"),
+           bins=breaks,
+           na.color = "#808080")
+
+
+leaflet() %>%
+  addMapboxTiles(
+    style_id = "dark-v9",
+    username = "mapbox"
+  ) %>%
+  addPolygons(data = getisgrid_dist, 
+              color = ~getis_pal(HOTSPOT),
+              stroke = F,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              group = "Disturbance"
+  ) %>% 
+  addPolygons(data = getisgrid_sus, 
+              color = ~getis_pal(HOTSPOT),
+              stroke = F,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              group = "Suspicious Person"
+  ) %>% 
+   addPolygons(data = getisgrid_tres, 
+              color = ~getis_pal(HOTSPOT),
+              stroke = F,
+              fillOpacity = 0.5,
+              smoothFactor = 0.5,
+              group = "Trespass"
+  ) %>% 
+  addPolygons(data = seattle_beats_sf,
+              fill = F, 
+              color = "white", 
+              weight = 1,
+              label = ~paste0("Beat ", beat)
+    ) %>%
+  addLegend(data = getisgrid_dist, 
+            colors = c("#0000FF80", "#8080FF80", "#FFFFFF80",
+                       "#FF808080", "#FF000080", "#808080"),
+  labels = c("Cold Spot > 2 Std. Dev.", 
+             "Cold Spot 1 - 2 Std. Dev.", 
+             "Not Significant",
+             "Hot Spot  1 - 2 Std. Dev.", 
+             "Hot Spot > 2 Std. Dev.", 
+             "NA"),
+  title = "Getis-Ord GI* Hot & Cold Spots") %>%
+  addLayersControl(
+    overlayGroups = c("Disturbance", "Suspicious Person", "Trespass"),
+    position = "bottomright",
+    options = layersControlOptions(collapsed = F)
+  ) %>%
+  setView(lng = -122.3321, lat = 47.6062, zoom = 11)
+
+```
+
+
+## How were the three types of cases resolved?
+
+Assistance rendered is the most common type of resolution for each of the three case types. Report written with no arrest is the next most common resolution for disturbance and trespass cases, and the third for suspicious person. Another common resolution was not being able to locate the incident/complainant, ranking third most common for disturbances, second in suspicious person cases, and fifth in trespass cases. 
+
+**No police action deemed possible or necessary was fourth most common resolution for disturbance and suspicious persons cases.** For trespass cases, no police action deemed possible or necessary was the sixth most common resolution with fewer than 1,000 cases.
+
+**The ranking of resolutions for suspicious persons cases looked similar to disturbances.** The fifth most common resolution differed between the two case types. For disturbances, responding units being canceled by the radio rounded out the top five types of resolutions. However, the suspicious persons top five was rounded out here with a written street check.
+
+**The rankings for trespass cases differed from the other two types.** For trespass cases, physical arrests and oral warnings were the third and fourth most common resolutions. Still, the number of trespass cases resolved with arrests and oral warnings are about one-quarter and one-tenth the number resolved by police rendering assistance, respectively. 
+
+
+```{r resolution by type}
+## Resolution for Disturbance cases Lolliplot
+focal_cases %>%
+  filter(case_type == "Disturbance") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc, c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>%
+  ggplot(., aes(x = n, y = reorder(Clear_By_Desc, n), label = comma(n, accuracy=1))) +
+  geom_segment(aes(yend = Clear_By_Desc), xend = 0, colour = "grey80") +
+  geom_point(size = 3, color = "red", alpha=0.6) + 
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig. 4.1: Resolutions for Disturbance Cases",
+       x = "Calls",
+       y = "",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust=1),
+  #panel.grid.major.y = element_line(colour = "grey60", linetype = "dashed")
+) 
+
+```
+
+```{r suspicious resolutions lplot}
+##suspicious_resolutions_lplot
+focal_cases %>%
+  filter(case_type == "Suspicious Person") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc, c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>%
+  ggplot(., aes(x = n, y = reorder(Clear_By_Desc, n), label = comma(n, accuracy=1))) +
+  geom_segment(aes(yend = Clear_By_Desc), xend = 0, colour = "grey80") +
+  geom_point(size = 3, color = "blue", alpha=0.6) + 
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig. 4.2: Resolutions for Suspicious Person Cases",
+       x = "Calls",
+       y = "",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust=1),
+) 
+
+```
+
+```{r trespass resolutions lolliplot}
+## Trespass resolutions lolliplot
+focal_cases %>%
+  filter(case_type == "Trespass") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc, c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>%
+  ggplot(., aes(x = n, y = reorder(Clear_By_Desc, n), label = comma(n, accuracy=1))) +
+  geom_segment(aes(yend = Clear_By_Desc), xend = 0, colour = "grey80") +
+  geom_point(size = 3, color = "green", alpha=0.6) + 
+  geom_text(size = 2.5, vjust= -0.5, fontface = "bold") +  
+  labs(title = "Fig. 4.3: Resolutions for Trespass Cases",
+       x = "Calls",
+       y = "",
+       caption = "Seattle, WA 2019") + 
+  scale_x_continuous(labels = scales::comma, breaks=pretty_breaks(n=10)) +
+  theme_classic() +
+  theme(
+  panel.grid.major.y = element_blank(),
+  axis.text.x = element_text(angle = 45, hjust=1),
+) 
+
+```
+
+
+
+## Does the type of resolution vary by location? {.tabset .tabset-fade}
+
+Let's focus on the top-5 resolutions for these cases of interest (as well as the and no police action deemed necessary or possible for trespass, which falls just outside of the top 5).
+
+I started by conducting a multi-type point pattern analysis for each case type and the case resolutions. These analyses test whether the case resolutions are co-located or dispersed. We can answer questions like: Among trespassing cases, are physical arrests and no police action possible or necessary resolutions co-located or are they dispersed? The results for all three case types - disturbance, suspicious person, and trespassing - indicated that different the resolution types tend to be co-located. 
+
+**One reason for the co-location pattern is that the analysis was run "globally." Global statistical techniques compute statistics/patterns for the full spatial extent, which in this case was the whole city. It's possible that on average the different types of resolutions are more co-located or clustered than dispersed.** If we want to take more localized approaches, then we could run multi-type point pattern analyses on smaller geographic units, e.g., precincts, to see if within the precincts there are tendencies for certain resolutions to occur in one region of the precinct while other resolutions occur more commonly in another region.
+
+As a set-up to this, I have presented graphs and maps of the resolutions types aggregated to precincts and beats. Choropleth maps are not the best visual for count data, so we might want to go back and create rates of resolutions per population/area or just run the point pattern analysis at precinct by precinct. 
+
+### By Precinct 
+```{r disturbance parsed by precinct graphic, message=F, warning=F}
+## PRECINCT DISTURBANCE RESOLUTIONS GRAPHIC
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
+not_resolutions <- c("NO SUCH ADDRESS OR LOCATION",
+                     "(NOT CURRENTLY USED) ALARM NO RESPONSE")
+
+resol_precinct_disturbance <- focal_cases_add_precinct_sf %>%
+  st_set_geometry(NULL) %>%
+  filter(case_type == "Disturbance" & 
+         Clear_By_Desc %!in% not_resolutions) %>%
+  mutate(Clear_By_Desc = plyr::revalue(
+    Clear_By_Desc, c("-"="NOT LISTED", 
+                     "INCIDENT LOCATED, PUBLIC ORDER RESTORED" = "PUBLIC ORDER RESTORED")
+    )) %>%
+  count(Clear_By_Desc, precinct) %>% 
+  rename(Calls = n) %>%
+  arrange(Clear_By_Desc, -Calls) %>%
+  filter(precinct != "NA")
+
+resol_dist_precinct_stacked <- resol_precinct_disturbance %>%
+  ggplot(. , aes(fill = precinct, y = Calls, x = Clear_By_Desc)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "",
+    y = "Proportion of Calls",
+    title = "Fig. 5.1: Disturbance Resolutions",
+    fill = "",
+    caption = "Seattle, WA 2019"
+  ) +
+  coord_flip() + 
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    axis.text.x = element_text(hjust=1)
+    )
+  
+resol_dist_precinct_stacked %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+```{r suspicious person resol parsed by precinct, warning=F, message=F}
+## PRECINCT SUSPICIOUS PERSON RESOLUTIONS GRAPHIC
+resol_precinct_suspicious <- focal_cases_add_precinct_sf %>%
+  st_set_geometry(NULL) %>%
+  filter(case_type == "Suspicious Person" & 
+         Clear_By_Desc %!in% not_resolutions) %>%
+  mutate(Clear_By_Desc = plyr::revalue(
+    Clear_By_Desc, c("-"="NOT LISTED", 
+                     "INCIDENT LOCATED, PUBLIC ORDER RESTORED" = "PUBLIC ORDER RESTORED")
+    )) %>%
+  count(Clear_By_Desc, precinct) %>% 
+  rename(Calls = n) %>%
+  arrange(Clear_By_Desc, -Calls) %>%
+  filter(precinct != "NA")
+
+resol_sus_precinct_stacked <- resol_precinct_suspicious %>%
+  ggplot(. , aes(fill = precinct, y = Calls, x = Clear_By_Desc)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "",
+    y = "Proportion of Calls",
+    title = "Fig.5.2:Suspicious Person Resolutions",
+    fill = "",
+    caption = "Seattle, WA 2019"
+  ) +
+  coord_flip() + 
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    axis.text.x = element_text(hjust=1)
+    )
+  
+resol_sus_precinct_stacked %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)
+
+```
+
+```{r trespass resol parsed by precinct, warning=F, message=F}
+## PRECINCT TRESPASS RESOLUTIONS GRAPHIC
+resol_precinct_trespass <- focal_cases_add_precinct_sf %>%
+  st_set_geometry(NULL) %>%
+  filter(case_type == "Trespass" & 
+         Clear_By_Desc %!in% not_resolutions) %>%
+  mutate(Clear_By_Desc = plyr::revalue(
+    Clear_By_Desc, c("-"="NOT LISTED", 
+                     "INCIDENT LOCATED, PUBLIC ORDER RESTORED" = "PUBLIC ORDER RESTORED")
+    )) %>%
+  count(Clear_By_Desc, precinct) %>% 
+  rename(Calls = n) %>%
+  arrange(Clear_By_Desc, -Calls) %>%
+  filter(precinct != "NA")
+
+resol_trespass_precinct_stacked <- resol_precinct_trespass %>%
+  ggplot(. , aes(fill = precinct, y = Calls, x = Clear_By_Desc)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "",
+    y = "Proportion of Calls",
+    title = "Fig. 5.3: Trespass Case Resolutions",
+    fill = "",
+    caption = "Seattle, WA 2019"
+  ) +
+  coord_flip() + 
+  theme_classic() +
+  theme(
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    axis.text.x = element_text(hjust=1)
+    )
+  
+resol_trespass_precinct_stacked %>%
+  ggplotly() %>%
+  layout(
+    xaxis = list(fixedrange = T),
+    yaxis = list(fixedrange = T)
+  ) %>%
+  config(displayModeBar = F)  
+
+```
+
+
+### By Beat
+```{r beat disturbance parsed map, message=F, warning=F}
+## Disturbances mapped
+resol_dist_top4 <- focal_cases %>%
+  filter(case_type == "Disturbance") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>% 
+  arrange(-n) %>%
+  slice(1:4)
+## full frame
+top4_resol_dist_beats <- focal_cases_pts_sf %>% 
+  filter(case_type == "Disturbance" & 
+         Clear_By_Desc %in% resol_dist_top4$Clear_By_Desc) %>% 
+  st_join(., seattle_beats_sf, join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(beat, Clear_By_Desc) %>%
+  summarize(Calls = n())
+
+top4_resol_dist_beats_sf <- seattle_beats_sf %>%
+  right_join(., top4_resol_dist_beats, by = "beat") %>%
+#  st_centroid() %>%
+  rename(precinct = "first_prec") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c(
+                                         "NO POLICE ACTION POSSIBLE OR NECESSARY" = "NO POLICE ACTION",
+                                         "UNABLE TO LOCATE INCIDENT OR COMPLAINANT" = "UNABLE TO LOCATE",
+                                         "REPORT WRITTEN (NO ARREST)" = "REPORT WRITTEN"))) 
+ 
+  ggplot(data = top4_resol_dist_beats_sf) +
+  geom_sf(
+    #data = top4_resol_dist_beats_sf,
+    aes(fill = Calls)
+    )  + 
+    #scale_size_continuous(name = "Calls", trans = "identity") +
+    scale_fill_viridis_c(name = "Calls", direction = -1, trans = "identity", option = "magma") +
+  theme_void() + coord_sf() + 
+  guides(color = guide_legend()) + 
+   ggtitle("Disturbance Resolutions across Beats") + #+
+  theme(
+      legend.position = "bottom"
+      ) +
+      facet_wrap(.~Clear_By_Desc, nrow = 1) 
+
+```
+
+
+```{r suspicious person resolutions choro, warning=F, message=F}
+## SUSPICIOUS PERSON RESOLUTIONS MAPPED
+resol_sus_top4 <- focal_cases %>%
+  filter(case_type == "Suspicious Person") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>% 
+  arrange(-n) %>%
+  slice(1:4)
+
+## full frame
+top4_resol_sus_beats <- focal_cases_pts_sf %>% 
+  filter(case_type == "Suspicious Person" & 
+         Clear_By_Desc %in% resol_sus_top4$Clear_By_Desc) %>% 
+  st_join(., seattle_beats_sf, join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(beat, Clear_By_Desc) %>%
+  summarize(Calls = n())
+
+top4_resol_sus_beats_sf <- seattle_beats_sf %>%
+  right_join(., top4_resol_sus_beats, by = "beat") %>%
+#  st_centroid() %>%
+  rename(precinct = "first_prec") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c(
+                                         "NO POLICE ACTION POSSIBLE OR NECESSARY" = "NO POLICE ACTION",
+                                         "UNABLE TO LOCATE INCIDENT OR COMPLAINANT" = "UNABLE TO LOCATE",
+                                         "REPORT WRITTEN (NO ARREST)" = "REPORT WRITTEN"))) 
+
+ ggplot(data = top4_resol_sus_beats_sf) +
+  geom_sf(
+    #data = top4_resol_dist_beats_sf,
+    aes(fill = Calls)
+    )  + 
+    #scale_size_continuous(name = "Calls", trans = "identity") +
+    scale_fill_viridis_c(name = "Calls", direction = -1, trans = "identity", option = "magma") +
+  theme_void() + coord_sf() + 
+  guides(color = guide_legend()) + 
+   ggtitle("Suspicious Person Resolutions across Beats") + #+
+  theme(legend.position = "bottom") +
+      facet_wrap(.~Clear_By_Desc, nrow = 1) 
+
+```
+
+```{r disturbances resolutions choro, warning=F, message=F}
+## Tresspass Resolutions mapped
+resol_tres_top4 <- focal_cases %>%
+  filter(case_type == "Trespass") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c("-"="NOT LISTED"))) %>%
+  count(Clear_By_Desc) %>% 
+  arrange(-n) %>%
+  slice(1:4)
+
+## full frame
+top4_resol_tres_beats <- focal_cases_pts_sf %>% 
+  filter(case_type == "Trespass" & 
+         Clear_By_Desc %in% resol_tres_top4$Clear_By_Desc) %>% 
+  st_join(., seattle_beats_sf, join = st_within) %>%
+  st_set_geometry(NULL) %>%
+  group_by(beat, Clear_By_Desc) %>%
+  summarize(Calls = n())
+
+top4_resol_tres_beats_sf <- seattle_beats_sf %>%
+  right_join(., top4_resol_tres_beats, by = "beat") %>%
+#  st_centroid() %>%
+  rename(precinct = "first_prec") %>%
+  mutate(Clear_By_Desc = plyr::revalue(Clear_By_Desc,
+                                       c(
+                                         "NO POLICE ACTION POSSIBLE OR NECESSARY" = "NO POLICE ACTION",
+                                         "UNABLE TO LOCATE INCIDENT OR COMPLAINANT" = "UNABLE TO LOCATE",
+                                         "REPORT WRITTEN (NO ARREST)" = "REPORT WRITTEN"))) 
+
+ ggplot(data = top4_resol_tres_beats_sf) +
+  geom_sf(
+    aes(fill = Calls)
+    )  + 
+    scale_fill_viridis_c(name = "Calls", direction = -1, trans = "identity",
+                         option = "magma") +
+   scale_colour_manual(values=NA) +
+   geom_sf(
+    data = seattle_beats_sf %>% filter(!is.na(first_prec) | sector != "H"),
+    fill = NA
+    ) +
+  theme_void() + coord_sf() + 
+  guides(color = guide_legend()) + 
+  ggtitle("Trespass Resolutions across Beats") + #+
+  theme(
+      legend.position = "bottom") +
+      facet_wrap(.~Clear_By_Desc, nrow = 1) 
+
+```
+
+```{r multitype test}
+# Multitype plot TEST 
+## PRECINCT WINDOWS 
+north_sp <- precincts_proj %>%
+  filter(precinct == "NORTH") %>%
+  as(., "Spatial")
+north_Owin <- as.owin(north_sp)
+
+plot(north_sp)
+
+trespass_north_pts_proj_sf <- focal_cases_pts_sf_proj %>%
+  filter(case_type == "Trespass") %>%
+  st_join(., precincts_proj, st_within) %>%
+  filter(precinct == "NORTH") %>%
+  select(Clear_By_Desc) %>%
+  mutate(Clear_By_Desc = factor(Clear_By_Desc, 
+                                levels = c("PHYSICAL ARREST MADE",
+                                           "REPORT WRITTEN (NO ARREST)",
+                                           "ORAL WARNING GIVEN",
+                                           "NO POLICE ACTION POSSIBLE OR NECESSARY",
+                                           "ASSISTANCE RENDERED",
+                                           "UNABLE TO LOCATE INCIDENT OR COMPLAINANT",
+                                           "DUPLICATED OR CANCELLED BY RADIO",
+                                           "PROBLEM SOLVING PROJECT",
+                                           "FOLLOW-UP REPORT MADE", 
+                                           "FALSE COMPLAINT/UNFOUNDED",
+                                           "CITATION ISSUED (CRIMINAL OR NON-CRIMINAL)",
+                                           "RESPONDING UNIT(S) CANCELLED BY RADIO", 
+                                           "STREET CHECK WRITTEN",
+                                           "OTHER REPORT MADE",
+                                           "-",
+                                           "INCIDENT LOCATED, PUBLIC ORDER RESTORED")
+                                ))
+
+trespass_north_pts_coords_matrix <- matrix(unlist(trespass_north_pts_proj_sf$geometry),
+                                             ncol = 2,
+                                             byrow =T)
+trespass_north_pts_ppp <- ppp(x = trespass_north_pts_coords_matrix[, 1],
+                              y = trespass_north_pts_coords_matrix[, 2], 
+                              window = north_Owin,
+                              marks = trespass_north_pts_proj_sf$Clear_By_Desc,
+                              check = T)
+
+c("PHYSICAL ARREST MADE", "REPORT WRITTEN (NO ARREST)", "ORAL WARNING GIVEN", "NO POLICE ACTION POSSIBLE OR NECESSARY", "ASSISTANCE RENDERED", "UNABLE TO LOCATE INCIDENT OR COMPLAINANT")
+trespass_north_resol_kfunction <- alltypes(trespass_north_pts_ppp, 
+                                           "Kcross", 
+                                           envelope = T)  #this takes awhile
+plot(density(split(trespass_north_pts_ppp)))
+plot(split(trespass_north_pts_ppp))
+plot(alltypes(trespass_north_pts_ppp,"K"))
+
+
+no_police_action_pts_case_type_sp <- no_police_action_pts_sf_proj %>%
+  select(case_type_final_desc_first) %>% 
+  filter(case_type_final_desc_first %in% six_focal_case_types_npapn) %>%
+  mutate(case_type_final_desc_first = as.factor(case_type_final_desc_first)) %>%
+  as(., "Spatial")
+
+no_police_action_pts_case_type_ppp <- as(no_police_action_pts_case_type_sp, "ppp")
+#plot(split(no_police_action_pts_case_type_ppp))
+
+case_types_npapn_kfunction <- alltypes(no_police_action_pts_case_type_ppp,
+                                       "Kcross",
+                                       envelope = T)  #this takes awhile
+plot(case_types_npapn_kfunction)
+
+```
+
+
