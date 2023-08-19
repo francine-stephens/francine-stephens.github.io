@@ -8,7 +8,7 @@ categories:
   - GIS
   - Data Visualization
   - Neighborhoods
-  - Parks
+  - Recreation
 output:
   distill::distill_article:
     self_contained: false
