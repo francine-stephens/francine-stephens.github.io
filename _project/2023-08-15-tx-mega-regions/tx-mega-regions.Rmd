@@ -1,0 +1,29 @@
+---
+title: "Get to Know Texas' Mega Regions"
+description: |
+  A data story of Texas' growing mega-regions.
+# author: []
+date: 2023-08-15
+categories: 
+  - GIS
+  - Cartography
+  - Data Visualization
+  - People Movement
+output:
+  distill::distill_article:
+    self_contained: false
+preview: infographic_preview.png
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+ 
+```{r, echo=FALSE, out.height = "50%"}
+knitr::include_graphics("Population Statistics Infographic.png")
+
+```
+
+
+**View Github Repo:** <a href="https://github.com/francine-stephens/texas_megaregions" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> Code</button> </a>

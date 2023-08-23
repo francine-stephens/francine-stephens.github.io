@@ -1,5 +1,22 @@
 [
   {
+    "path": "project/2023-08-15-tx-mega-regions/",
+    "title": "Get to Know Texas' Mega Regions",
+    "description": "A data story of Texas' growing mega-regions.",
+    "author": [],
+    "date": "2023-08-15",
+    "categories": [
+      "GIS",
+      "Cartography",
+      "Data Visualization",
+      "People Movement"
+    ],
+    "contents": "\r\n\r\n\r\n\r\nView Github Repo:    Code \r\n\r\n\r\n\r\n",
+    "preview": "project/2023-08-15-tx-mega-regions/infographic_preview.png",
+    "last_modified": "2023-08-23T15:06:34-07:00",
+    "input_file": {}
+  },
+  {
     "path": "project/2023-07-16-southcentraltx/",
     "title": "Maps of South Central Texas",
     "description": "A sample of maps of South Central Texas.",
