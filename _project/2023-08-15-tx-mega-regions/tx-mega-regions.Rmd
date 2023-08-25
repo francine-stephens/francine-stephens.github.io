@@ -5,14 +5,14 @@ description: |
 # author: []
 date: 2023-08-15
 categories: 
+  - People Movement
   - GIS
   - Cartography
   - Data Visualization
-  - People Movement
 output:
   distill::distill_article:
     self_contained: false
-preview: infographic_preview.png
+preview: flows-GRAPHIC.jpg
 ---
 
 
@@ -21,9 +21,15 @@ knitr::opts_chunk$set(echo = FALSE)
 ```
  
 ```{r, echo=FALSE, out.height = "50%"}
-knitr::include_graphics("Population Statistics Infographic.png")
+knitr::include_graphics("Population Statistics Infographic_orange_blue.png")
 
 ```
 
+-----
+
+```{r}
+knitr::include_graphics("flows-layout.jpg")
+
+```
 
 **View Github Repo:** <a href="https://github.com/francine-stephens/texas_megaregions" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> Code</button> </a>
