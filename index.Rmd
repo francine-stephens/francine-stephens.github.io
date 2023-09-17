@@ -26,4 +26,4 @@ site: distill::distill_website
 
 ### Data Scientist | Data Storyteller | Versatile Methodologist
 
-Welcome to my personal website!  I am a data professional broadly trained in quantitative, geospatial, and qualitative analysis and nimble at analyzing and visualizing unstructured and structured data. I recently graduated from Stanford University's sociology Ph.D. program and am looking to pursue my passion for creating functional, yet artful visualizations that provide insights to decision-makers in the fitness tech, leisure, tourism, or real estate spaces. Learn more about me and my projects by exploring this site.
+Welcome to my personal website!  I am a data professional broadly trained in quantitative, geospatial, and qualitative analysis and nimble at analyzing and visualizing unstructured and structured data. I recently completed my Ph.D. in Sociology at Stanford University. Currently, I am searching for an opportunity to pursue my passion for creating functional, yet artful visualizations that provide insights to decision-makers in the fitness tech, leisure, tourism, or real estate spaces. Learn more about me and my projects by exploring this site.
