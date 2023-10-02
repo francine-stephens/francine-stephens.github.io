@@ -117,7 +117,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
   <!--/radix_placeholder_rmarkdown_metadata-->
   
   <script type="text/json" id="radix-resource-manifest">
-  {"type":"character","attributes":{},"value":["analyze_blind_reviews.html","blind_table.png","blindreviews_files/anchor-4.2.2/anchor.min.js","blindreviews_files/bowser-1.9.3/bowser.min.js","blindreviews_files/distill-2.2.21/template.v2.js","blindreviews_files/header-attrs-2.21/header-attrs.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.map","blindreviews_files/popper-2.6.0/popper.min.js","blindreviews_files/tippy-6.2.7/tippy-bundle.umd.min.js","blindreviews_files/tippy-6.2.7/tippy-light-border.css","blindreviews_files/tippy-6.2.7/tippy.css","blindreviews_files/tippy-6.2.7/tippy.umd.min.js","blindreviews_files/webcomponents-2.0.0/webcomponents.js","execute_blind_webscraper.html","Ratings_Change_Over_Time.png","Ratings_count_per_month.png"]}
+  {"type":"character","attributes":{},"value":["analyze_blind_reviews.html","archive/blind_table.png","archive/scrape_blind_reviews_scalar_ratings.R","blind table.png","blindreviews_files/anchor-4.2.2/anchor.min.js","blindreviews_files/bowser-1.9.3/bowser.min.js","blindreviews_files/distill-2.2.21/template.v2.js","blindreviews_files/header-attrs-2.21/header-attrs.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.js","blindreviews_files/jquery-3.6.0/jquery-3.6.0.min.map","blindreviews_files/popper-2.6.0/popper.min.js","blindreviews_files/tippy-6.2.7/tippy-bundle.umd.min.js","blindreviews_files/tippy-6.2.7/tippy-light-border.css","blindreviews_files/tippy-6.2.7/tippy.css","blindreviews_files/tippy-6.2.7/tippy.umd.min.js","blindreviews_files/webcomponents-2.0.0/webcomponents.js","execute_blind_webscraper.html","Ratings_Change_Over_Time.png","Ratings_count_per_month.png","statistical significance.png"]}
   </script>
   <!--radix_placeholder_navigation_in_header-->
   <!--/radix_placeholder_navigation_in_header-->
@@ -1495,7 +1495,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <!--radix_placeholder_front_matter-->
 
 <script id="distill-front-matter" type="text/json">
-{"title":"Web Scraping & Analysis of Blind Reviews","description":"Code and analysis from the web-scraper script and analysis workflow that I created for the Blind Review listening channel for the Intuit People Analytics Team.","authors":[],"publishedDate":"2022-04-01T00:00:00.000-07:00"}
+{"title":"Web Scraping & Analysis of Blind Reviews","description":"Code and analysis from the web-scraper script and analysis workflow that I created for the Blind Review listening channel for the Intuit People Analytics Team.","authors":[],"publishedDate":"2022-04-01T00:00:00.000-05:00"}
 </script>
 
 <!--/radix_placeholder_front_matter-->
@@ -1522,7 +1522,7 @@ code span.wa { color: #5e5e5e; font-style: italic; } /* Warning */
 <p>Based on her vision, I crafted the code to scrape ratings on Intuit’s Blind page and the pages of five other competitors: Microsoft, Salesforce, Google, Facebook/Meta, and Amazon and analyze the reviews on a monthly basis. The images and slide deck below show the final outputs of the end-to-end process that I devised.</p>
 <div class="layout-chunk" data-layout="l-body">
 <div class="figure"><span style="display:block;" id="fig:unnamed-chunk-1"></span>
-<img src="blind_table.png" alt="Ratings Overview" width="641" />
+<img src="blind%20table.png" alt="Ratings Overview" width="637" />
 <p class="caption">
 Figure 1: Ratings Overview
 </p>
@@ -1530,18 +1530,27 @@ Figure 1: Ratings Overview
 </div>
 <div class="layout-chunk" data-layout="l-body">
 <div class="figure"><span style="display:block;" id="fig:unnamed-chunk-2"></span>
-<img src="Ratings_count_per_month.png" alt="Monthly Review Frequency" width="2100" />
+<img src="Ratings_Change_Over_Time.png" alt="Monthly Review Frequency" width="2250" />
 <p class="caption">
 Figure 2: Monthly Review Frequency
 </p>
 </div>
 </div>
-<p>#View the components of the end-to-end Blind Reviews Workflow:</p>
+<div class="layout-chunk" data-layout="l-body">
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-3"></span>
+<img src="statistical%20significance.png" alt="Comparison of Ratings. Bolded ratings are statistically significantly different from Intuit's" width="860" />
+<p class="caption">
+Figure 3: Comparison of Ratings. Bolded ratings are statistically significantly different from Intuit’s
+</p>
+</div>
+</div>
+<h1 id="view-the-components-of-the-end-to-end-blind-reviews-workflow">View the components of the end-to-end Blind Reviews Workflow:</h1>
+<p><em>The scripts were last updated for presentation in Late September/Early October 2023.</em></p>
 <p>
 <ul>
 <li><strong>The Deliverable:</strong> I mocked up the slides included on the Blind monthly analysis that we would present to the managers of the analytics and research team. <a href="https://docs.google.com/presentation/d/11vu7u_p9DwfU4wJlozWZ5LLzi8tjJLTNF8ulOwUAufg/edit?usp=sharing" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-file-powerpoint fa-lg"></i> Slides</button> </a></li>
-<li><strong>Scraping Functions:</strong> These functions are imported into the execution script and can be seen below. <a href="https://github.com/francine-stephens/blind_reviews/blob/main/scrape_blind_reviews_scalar_ratings.R" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
-<li><strong>Executable Scraping Script:</strong> <a href="execute_blind_webscraper.html" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
+<li><strong>Scraping Functions:</strong> These functions are imported into the execution script and can be seen below. <a href="https://github.com/francine-stephens/blind_reviews/blob/main/scalar_ratings_scraping_functions.R" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
+<li><strong>Executable Scraping Script:</strong> <a href="https://github.com/francine-stephens/blind_reviews/blob/main/execute_blind_webscraper.Rmd" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
 <li><strong>Analysis Script:</strong> <a href="analyze_blind_reviews.html" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fa-solid fa-code"></i> Code</button> </a></li>
 <li><strong>All Code:</strong> <a href="https://github.com/francine-stephens/blind_reviews/tree/main" style="margin-left: 1em"> <button class="btn btn-outline-dark"> <i class="fab fa-github fa-lg"></i> GitHub Repo</button> </a></li>
 </ul>
@@ -1553,7 +1562,7 @@ Figure 2: Monthly Review Frequency
 <span></span>
 <span><span class='co'>## Overview &amp; Getting Started</span></span>
 <span></span>
-<span><span class='co'>#The script contains functions to perform the following steps:</span></span>
+<span><span class='co'># The script contains functions to perform the following steps:</span></span>
 <span></span>
 <span><span class='co'># * Find the maximum number of pages to be queried on Blind.</span></span>
 <span><span class='co'># * Generate all the sub-pages that make up the reviews</span></span>
@@ -1565,9 +1574,11 @@ Figure 2: Monthly Review Frequency
 <span></span>
 <span><span class='co'>################################################################################</span></span>
 <span><span class='co'>## Step 1</span></span>
-<span><span class='co'># **Write Functions to Extract key Information from Each Field of the Review**</span></span>
+<span><span class='co'># **Extract key Information from Each Field of the Review**</span></span>
 <span><span class='co'>#   </span></span>
-<span><span class='co'># Rely on developer tools, i.e., inspect option when right clicking on feature on webpage, to find the html tag that contains the piece of the review you want to extract. </span></span>
+<span><span class='co'># Rely on developer tools.</span></span>
+<span><span class='co'># Use the inspect option when right clicking on feature on webpage</span></span>
+<span><span class='co'># to find the html tag that contains the piece of the review you want to extract. </span></span>
 <span><span class='co'># </span></span>
 <span><span class='co'># The pieces of the review that we care about are AND can scrape: </span></span>
 <span><span class='co'>#   </span></span>
@@ -1575,8 +1586,13 @@ Figure 2: Monthly Review Frequency
 <span><span class='co'># - Reviewer's job title</span></span>
 <span><span class='co'># - Review ratings</span></span>
 <span></span>
+<span><span class='co'>## Trim white space and convert extracted information to vectors</span></span>
+<span><span class='va'>trim_and_unlist</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span> </span>
+<span>  <span class='va'>x</span> <span class='op'>%&gt;%</span> </span>
+<span>  <span class='fu'>str_trim</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>                       </span>
+<span>  <span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='op'>)</span> </span>
+<span>  <span class='op'>}</span></span>
 <span></span>
-<span><span class='co'># Define functions that extract the key pieces of the review</span></span>
 <span></span>
 <span><span class='co'>## Title</span></span>
 <span><span class='va'>get_review_title</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>html</span><span class='op'>)</span><span class='op'>{</span></span>
@@ -1584,22 +1600,16 @@ Figure 2: Monthly Review Frequency
 <span>    <span class='co'># Specify the relevant tag</span></span>
 <span>    <span class='fu'>html_nodes</span><span class='op'>(</span><span class='st'>'.rvtit'</span><span class='op'>)</span> <span class='op'>%&gt;%</span>      </span>
 <span>    <span class='fu'>html_text</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
-<span>    <span class='co'># Trim additional white space</span></span>
-<span>    <span class='fu'>str_trim</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>                       </span>
-<span>    <span class='co'># Convert the list into a vector</span></span>
-<span>    <span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='op'>)</span>                             </span>
+<span>    <span class='fu'>trim_and_unlist</span><span class='op'>(</span><span class='op'>)</span></span>
 <span><span class='op'>}</span></span>
 <span></span>
 <span><span class='co'>## Reviewer Demographics (current/former; job title)</span></span>
 <span><span class='va'>get_reviewer_info</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>html</span><span class='op'>)</span><span class='op'>{</span></span>
 <span>  <span class='va'>html</span> <span class='op'>%&gt;%</span> </span>
-<span>    <span class='co'># Specify the relevant tag for the node</span></span>
 <span>    <span class='fu'>html_nodes</span><span class='op'>(</span><span class='st'>'.auth'</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='fu'>html_text</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
-<span>    <span class='fu'>str_trim</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='fu'>str_remove</span><span class='op'>(</span><span class='st'>"Verified User"</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
-<span>    <span class='fu'>str_trim</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span></span>
-<span>    <span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='op'>)</span></span>
+<span>    <span class='fu'>trim_and_unlist</span><span class='op'>(</span><span class='op'>)</span></span>
 <span><span class='op'>}</span></span>
 <span></span>
 <span><span class='co'>## Star-Ratings</span></span>
@@ -1608,17 +1618,14 @@ Figure 2: Monthly Review Frequency
 <span>    <span class='co'># Specify the relevant tag for the node</span></span>
 <span>    <span class='fu'>html_nodes</span><span class='op'>(</span><span class='st'>'.review_item_inr'</span><span class='op'>)</span> <span class='op'>%&gt;%</span>      </span>
 <span>    <span class='fu'>html_text</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
-<span>    <span class='co'># Trim additional white space</span></span>
-<span>    <span class='fu'>str_trim</span><span class='op'>(</span><span class='op'>)</span> <span class='op'>%&gt;%</span>  </span>
-<span>    <span class='co'># Convert the list into a vector</span></span>
-<span>    <span class='fu'><a href='https://rdrr.io/r/base/unlist.html'>unlist</a></span><span class='op'>(</span><span class='op'>)</span>                             </span>
+<span>    <span class='fu'>trim_and_unlist</span><span class='op'>(</span><span class='op'>)</span>                          </span>
 <span><span class='op'>}</span></span>
 <span></span>
 <span><span class='co'>################################################################################</span></span>
 <span></span>
 <span><span class='co'>## Step 2</span></span>
 <span></span>
-<span><span class='co'>#*Scrape Website*</span></span>
+<span><span class='co'># Scrape Website</span></span>
 <span></span>
 <span><span class='va'>get_data_table</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>html</span><span class='op'>)</span><span class='op'>{</span></span>
 <span>  </span>
@@ -1628,7 +1635,7 @@ Figure 2: Monthly Review Frequency
 <span>  <span class='va'>reviews</span> <span class='op'>&lt;-</span> <span class='fu'>get_reviews</span><span class='op'>(</span><span class='va'>html</span><span class='op'>)</span></span>
 <span>  </span>
 <span>  </span>
-<span>  <span class='co'># Combine into a tibble</span></span>
+<span>  <span class='co'># Combine all info</span></span>
 <span>  <span class='va'>combined_data</span> <span class='op'>&lt;-</span> <span class='fu'>tibble</span><span class='op'>(</span></span>
 <span>    reviewer <span class='op'>=</span> <span class='va'>review_info</span>,</span>
 <span>    title <span class='op'>=</span> <span class='va'>title</span>,</span>
@@ -1645,8 +1652,7 @@ Figure 2: Monthly Review Frequency
 <span></span>
 <span><span class='va'>scrape_write_table</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>url</span><span class='op'>)</span><span class='op'>{</span></span>
 <span>  </span>
-<span>  <span class='co'># Apply the extraction and bind the individual results back into one table, </span></span>
-<span>  <span class='co'># which is then written as a tsv file into the working directory</span></span>
+<span>  <span class='co'># Apply the extraction functions and bind the results into one table </span></span>
 <span>  <span class='va'>list_of_pages</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='co'># Apply to all URLs</span></span>
 <span>    <span class='fu'>map</span><span class='op'>(</span><span class='va'>get_data_from_url</span><span class='op'>)</span> <span class='op'>%&gt;%</span>  </span>
@@ -1660,39 +1666,27 @@ Figure 2: Monthly Review Frequency
 <span><span class='co'>################################################################################</span></span>
 <span><span class='co'>## Step 3 </span></span>
 <span></span>
-<span><span class='co'>#*Create a clean data table &amp; Export for Analysis**</span></span>
+<span><span class='co'># Create a clean data table &amp; Export for Analysis</span></span>
 <span><span class='va'>clean_scraped_data</span> <span class='op'>&lt;-</span> <span class='kw'>function</span><span class='op'>(</span><span class='va'>x</span><span class='op'>)</span> <span class='op'>{</span></span>
 <span>  <span class='va'>x</span> <span class='op'>%&gt;%</span></span>
+<span>    <span class='co'># Ratings</span></span>
 <span>    <span class='fu'>mutate</span><span class='op'>(</span></span>
-<span>      <span class='co'>#Overall Rating</span></span>
 <span>      overall_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>,</span>
 <span>                                   <span class='st'>"Rating Score[[:digit:]]"</span> <span class='op'>)</span>,</span>
-<span>      overall_rating <span class='op'>=</span> <span class='fu'>str_remove</span><span class='op'>(</span><span class='va'>overall_rating</span>,</span>
-<span>                                  <span class='st'>"Rating Score"</span><span class='op'>)</span>, </span>
-<span>      <span class='co'>#Career Growth</span></span>
 <span>      career_growth_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>, </span>
 <span>                                         <span class='st'>"[[:digit:]]Career"</span><span class='op'>)</span>,</span>
-<span>      career_growth_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>career_growth_rating</span>, <span class='st'>"[[:digit:]]"</span><span class='op'>)</span>,</span>
-<span>      <span class='co'>#WLB </span></span>
 <span>      wlb_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>,</span>
 <span>                               <span class='st'>"[[:digit:]]Work - Life Balance"</span><span class='op'>)</span>,</span>
-<span>      wlb_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>wlb_rating</span>, </span>
-<span>                               <span class='st'>"[[:digit:]]"</span><span class='op'>)</span>,</span>
-<span>      <span class='co'>#Compensation / Benefits</span></span>
 <span>      compensation_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>, </span>
 <span>                                        <span class='st'>"[[:digit:]]Compensation / Benefits"</span><span class='op'>)</span>,</span>
-<span>      compensation_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>compensation_rating</span>, </span>
-<span>                                        <span class='st'>"[[:digit:]]"</span><span class='op'>)</span>,</span>
-<span>      <span class='co'>#Company Culture</span></span>
 <span>      company_culture_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>,</span>
 <span>                                           <span class='st'>"[[:digit:]]Company"</span><span class='op'>)</span>,</span>
-<span>      company_culture_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>company_culture_rating</span>, </span>
-<span>                                           <span class='st'>"[[:digit:]]"</span><span class='op'>)</span>,</span>
-<span>      <span class='co'>#Management </span></span>
 <span>      management_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>review</span>, </span>
-<span>                                      <span class='st'>"[[:digit:]]Management"</span><span class='op'>)</span>,</span>
-<span>      management_rating <span class='op'>=</span> <span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>management_rating</span>, </span>
-<span>                                      <span class='st'>"[[:digit:]]"</span><span class='op'>)</span>,</span>
+<span>                                      <span class='st'>"[[:digit:]]Management"</span><span class='op'>)</span></span>
+<span>      <span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
+<span>    <span class='fu'>mutate</span><span class='op'>(</span><span class='fu'>across</span><span class='op'>(</span><span class='fu'>ends_with</span><span class='op'>(</span><span class='st'>"_rating"</span><span class='op'>)</span>, <span class='op'>~</span><span class='fu'>str_extract</span><span class='op'>(</span><span class='va'>.x</span>, <span class='st'>"[[:digit:]]"</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
+<span>    <span class='fu'>mutate</span><span class='op'>(</span><span class='fu'>across</span><span class='op'>(</span><span class='fu'>ends_with</span><span class='op'>(</span><span class='st'>"_rating"</span><span class='op'>)</span>, <span class='op'>~</span><span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
+<span>    <span class='fu'>mutate</span><span class='op'>(</span></span>
 <span>      <span class='co'># Review Title</span></span>
 <span>      title <span class='op'>=</span> <span class='fu'>str_remove</span><span class='op'>(</span><span class='va'>title</span>, <span class='st'>"“"</span><span class='op'>)</span>,</span>
 <span>      title <span class='op'>=</span> <span class='fu'>str_remove</span><span class='op'>(</span><span class='va'>title</span>, <span class='st'>"”"</span><span class='op'>)</span>,</span>
@@ -1718,7 +1712,6 @@ Figure 2: Monthly Review Frequency
 <span>             <span class='va'>company_culture_rating</span>, </span>
 <span>             <span class='va'>management_rating</span>,</span>
 <span>             <span class='va'>title</span><span class='op'>)</span>  <span class='op'>%&gt;%</span> </span>
-<span>    <span class='fu'>mutate</span><span class='op'>(</span><span class='fu'>across</span><span class='op'>(</span><span class='fu'>ends_with</span><span class='op'>(</span><span class='st'>"_rating"</span><span class='op'>)</span>, <span class='op'>~</span><span class='fu'><a href='https://rdrr.io/r/base/numeric.html'>as.numeric</a></span><span class='op'>(</span><span class='va'>.x</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='fu'>separate</span><span class='op'>(</span><span class='va'>date</span>,</span>
 <span>             <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"Month"</span>, <span class='st'>"Day"</span>, <span class='st'>"Year"</span><span class='op'>)</span>,</span>
 <span>             sep <span class='op'>=</span> <span class='st'>" "</span>,</span>
@@ -1730,8 +1723,6 @@ Figure 2: Monthly Review Frequency
 <span>    <span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='fu'>relocate</span><span class='op'>(</span><span class='va'>date</span>, <span class='va'>Date_obj</span><span class='op'>)</span> <span class='op'>%&gt;%</span> </span>
 <span>    <span class='fu'>arrange</span><span class='op'>(</span><span class='fu'>desc</span><span class='op'>(</span><span class='va'>Date_obj</span><span class='op'>)</span><span class='op'>)</span></span>
-<span>  </span>
-<span>  </span>
 <span><span class='op'>}</span></span></code></pre>
 </div>
 </div>

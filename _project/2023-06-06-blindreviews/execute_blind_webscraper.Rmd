@@ -13,6 +13,14 @@ This script loads the web-scraping and cleaning functions. Be sure to **UPDATE**
 
 The script will generate a data file (in RDS and CSV formats) that will have all of the months of reviews to date for the company that you set in the parameters. This data file will be called upon in the analysis script, which generates the tables and visuals for the monthly P&P senior staff VOE meeting. 
 
+**Companies to consider (list subject to change in first few months)**
+* Intuit
+* Google
+* Facebook
+* Salesforce
+* Amazon
+* Microsoft
+
 ```{r setup, warning=FALSE, message=FALSE, include=TRUE}
 
 ##### Uncomment the lines below if running for the FIRST TIME #####
@@ -29,51 +37,38 @@ libraries <- c("tidyverse",
                "rebus",
                "lubridate"
 )
-require(libraries)
 lapply(libraries, require, character.only = TRUE)
 
-# Set Key-Parameters
-## UPDATE the start of month date & start of next month date ##
+# Set Key-Parameters -----------------------------------------------------------
+## UPDATE time and company parameters ##
 month_start_reviews <- as.Date("2022-03-01")
 month_start_next_month <- as.Date("2022-04-01")
+company_lower <- c("intuit")
 
-## UPDATE company Blind URL ##
-url <- "https://www.teamblind.com/company/Intuit/reviews"
+## Blind URL to direct scraper to ##
+url_base <- c("https://www.teamblind.com/company/")
+url_reviews <- c("/reviews")
+url <- paste0(url_base, company_lower, url_reviews)
 
-## Set the list of pages in website; Check Blind website for page range. ##
+
+## Set the list of pages in website; 
+#Check Blind website to see if page range needs to be updated. 
 list_of_pages <- str_c(url, '?page=', 1:24)
-  
 
-## UPDATE existing datafile that holds all Blind data ##
-existing_blind_reviews <- readRDS("intuit_reviews.rds")
-  # google_reviews.rds
-  # amazon_reviews.rds
-  # salesforce_reviews.rds
-  # microsoft_reviews.rds
-  # facebook_reviews.rds
+## Datafile with Blind reviews ##
+existing_blind_reviews <- readRDS(paste0(company_lower, "_reviews.rds"))
 
+# Output DF names ## 
+updated_ratings_data_rds <- paste0(company_lower, "_reviews.rds")
 
-# UPDATE Name for new ratings data-frame in RDS and CSV formats ## 
-updated_ratings_data_rds <- paste0("intuit", "_reviews.rds")
-  # google_reviews.rds
-  # amazon_reviews.rds
-  # salesforce_reviews.rds
-  # microsoft_reviews.rds
-  # facebook_reviews.rds
-
-updated_ratings_data_csv <- paste0("intuit", "_reviews.csv")
-  # google_reviews.csv
-  # amazon_reviews.csv
-  # salesforce_reviews.csv
-  # microsoft_reviews.csv
-  # facebook_reviews.csv
+updated_ratings_data_csv <- paste0(company_lower, "_reviews.csv")
 
 ```
 
 
 # Source all Web-Scraping & Cleaning Functions
 ```{r source scraping functions}
-source("scrape_blind_reviews_scalar_ratings.R", local = knitr::knit_global())
+source("scalar_ratings_scraping_functions.R", local = knitr::knit_global())
 ```
 
 ```{r function code, file='scrape_blind_reviews_scalar_ratings.R'}
