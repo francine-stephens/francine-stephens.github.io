@@ -1,3 +1,20 @@
+Welcome to my personal website! As a data scientist and visualization specialist, I am nimble at organizing large quantities of data and information into a coherent story with digestible insights. Data science projects get my analytical and creative juices flowing. I believe that even the smallest of details like color, font, and shape contribute to my audience's visual experience, and can elevate a visual from just a representation of data to a source of inspiration that sparks action or changes opinions. My user-centered approach to designing visualizations has enabled me to create maps, graphs, and charts that are informative, memorable, and inspirational for stakeholders in the tech and not-for-profit industries.
+
+Learn more about me and my functional, yet artful visualization style by exploring the projects on my site.
+
+//
+I pride myself on organizing large quantities of data and information into a coherent story with digestible insights. 
+
+
+-----------------------------------
+
+## OLD INDEX PAGE TEXT
+
+### Data Scientist | Data Storyteller | Versatile Methodologist
+
+Welcome to my personal website!  I am a data professional broadly trained in quantitative, geospatial, and qualitative analysis and nimble at analyzing and visualizing unstructured and structured data. I recently completed my Ph.D. in Sociology at Stanford University. In my new role as a Quantitative UX Researcher at Mozilla, I am pursuing my passion for creating functional, yet artful visualizations that provide insights to decision-makers in the tech space. Learn more about me and my projects by exploring this site.
+
+------------------------------------
 ## OLD ABOUT TEXT
 
 **Professional Background**

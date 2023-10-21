@@ -1,0 +1,19 @@
+I am data professional focused on data visualization, statistics, and Geographic Information Systems (GIS) with a social science Ph.D. from Stanford. Across my academic and professional background, I have been recognized for my technical agility and integrating diverse research methodologies for strategic insights. 
+
+Currently, I am working as a quantitative research specialist for Mozilla's Firefox User Research team and freelancing as a geospatial data scientist. Please get in touch with me about opportunities via email at francine.isabel.stephens@gmail.com.
+
+Highlights:
+I earned my graduate degrees while working two full-time jobs on small data science/research teams.
+• Spatial Data Analyst: I owned daily data collection, storage, analysis, and dashboard reporting for Texas' 254 counties in the 2020 general election. 
+• Research Scientist, Internal Customer Experience: I led data analysis and reporting for 2 data science projects and 3 mixed methods research projects. 
+
+Skills Summary: 
+• Proficient in R, Python, SQL programming languages.
+• Competent in Tableau, Shiny, Plotly, Leaflet, ESRI ArcGIS Desktop & Online, Adobe Creative Suite.
+• Adept at Data Mining, Statistics, Regression, Machine Learning, GIS, Natural Language Processing (NLP, topic modelling and sentiment analysis), Mixed Methods Research.
+• Familiar with GitHub/Lab, AWS, Command Line, Agile Project Management, Asana, Jira.
+
+Interests: 
+• Outdoors & Fitness Tech 
+• Tourism & Leisure 
+•  Real Estate & Housing

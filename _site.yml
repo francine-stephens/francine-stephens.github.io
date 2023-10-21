@@ -9,9 +9,11 @@ navbar:
     #   href: index.html
     - text: "About"
       href: about.html
-    - text: "Résumé"
-      href: resume.pdf
     - text: "Projects"
       href: projects.html
+    - text: "Teaching & Talks"
+      href: teaching-talks.html
+    - text: "Résumé"
+      href: resume.pdf
 google_analytics: "G-Z5FMF0LVZS"
 output: distill::distill_article

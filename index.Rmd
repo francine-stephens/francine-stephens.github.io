@@ -24,6 +24,10 @@ site: distill::distill_website
   gtag('config', 'G-Z5FMF0LVZS');
 </script>
 
-### Data Scientist | Data Storyteller | Versatile Methodologist
+### Data Science | Data Storytelling | Location Analytics
 
-Welcome to my personal website!  I am a data professional broadly trained in quantitative, geospatial, and qualitative analysis and nimble at analyzing and visualizing unstructured and structured data. I recently completed my Ph.D. in Sociology at Stanford University. In my new role as a Quantitative UX Researcher at Mozilla, I am pursuing my passion for creating functional, yet artful visualizations that provide insights to decision-makers in the tech space. Learn more about me and my projects by exploring this site.
+<br></br>
+Welcome to my personal website! I'm a data scientist and visualization specialist with a social science PhD from Stanford University and quantitative research experience in tech and non-profits.
+
+Data science projects get my analytical and creative juices flowing. I take a user-centered approach to designing visualizations, so that my maps, graphs, and charts not only represent the data, but also inspire my audience to act or change their point-of-view. Learn more about me and my functional, yet artful visualization style by exploring the rest of my site.
+
