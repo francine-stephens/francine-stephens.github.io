@@ -11,7 +11,7 @@ navbar:
       href: about.html
     - text: "Projects"
       href: projects.html
-    - text: "Teaching & Talks"
+    - text: "Talks & Teaching"
       href: teaching-talks.html
     - text: "Résumé"
       href: resume.pdf
