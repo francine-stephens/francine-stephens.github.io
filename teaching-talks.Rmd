@@ -17,21 +17,45 @@ title: "Teaching & Talks"
 
 # GitHub 101
 
-[insert here]
+In my second week at Mozilla, I was asked to teach the other members of the quantitative research team about GitHub and the best practices for using it. I created this deck to accompany my live demo of the GitHub workflow in RStudio for my colleagues.
+
+```{r, out.width = "85%", fig.cap = "GitHub 101 deck", echo=FALSE}
+
+wd <- getwd()
+
+knitr::include_graphics(paste0(wd, "/images/Github 101.pdf"))
+```
 
 
 --------------------------------------------------------------------------------
 
 # Foundations of Social Research
 
+I was a teaching assistant for the undergraduage research methods course multiple times during my graduate studies and was awarded the Cilker award for teaching excellence in part for my service in this class. The slide decks here show my ability to breakdown complex, technical concepts for an audience with no research background.
 
-[insert here]
 
+```{r, out.width = "85%", fig.cap = "Lab 1 Slidedeck", echo=FALSE}
+knitr::include_graphics(paste0(wd, "/images/lab1.pdf"))
+```
+
+```{r, out.width = "85%", fig.cap = "Lab 2 Slidedeck", echo=FALSE}
+knitr::include_graphics(paste0(wd, "/images/lab2.pdf"))
+```
+
+```{r, out.width = "85%", fig.cap = "Lab 6 Slidedeck", echo=FALSE}
+knitr::include_graphics(paste0(wd, "/images/lab6.pdf"))
+```
 
 --------------------------------------------------------------------------------
 
 
 # Social Life of Neighborhoods
 
-[insert here]
+As the teaching assistant for the Social Life of Neighborhoods, I created a [website]("https://bookdown.org/fis/social-life-of-neighborhoods/"){target="_blank"} of 10 tutorials to guide students with no GIS experience through the steps of web-map making for their assignments and projects. The tutorials demonstrate my ability to organize information and communicate data processes in writting and through visuals.
+
+
+```{r, out.width = "85%", fig.cap = "Tutorials", echo=FALSE}
+knitr::include_url("https://bookdown.org/fis/social-life-of-neighborhoods/")
+
+```
 
