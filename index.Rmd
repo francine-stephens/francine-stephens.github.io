@@ -31,3 +31,4 @@ Welcome to my personal website! I'm a data scientist and visualization specialis
 
 Data science projects get my analytical and creative juices flowing. I take a user-centered approach to designing visualizations, so that my maps, graphs, and charts not only represent the data, but also inspire my audience to act or change their point-of-view. Learn more about me and my functional, yet artful visualization style by exploring the rest of my site.
 
+*Note: I am in the process of refining my website, so please excuse inconsistent styles across pages.*
